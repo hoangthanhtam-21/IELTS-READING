@@ -44,7 +44,7 @@
                 { "id": 32, "type": "inline", "text": "32. In the 1970s, pictures of the Pompidou" },
                 { "id": 33, "type": "inline", "text": "33. The original plans for the floors of the Pompidou" },
                 { "id": 34, "type": "inline", "text": "34. The detailed structure of the finished building" },
-                { "id": 35, "type": "inline", "instruction": "Questions 35-40: Do the following statements agree with the views of the writer? <br><br>Write:<br>YES - if the statement agrees with the views of the writer.<br>NO - if the statement contradicts the views of the writer.<br>NOT GIVEN - if it is impossible to say what the writer thinks about this.", "text": "35. The Pompidou has influenced the way cities are designed." },
+                { "id": 35, "type": "inline", "instruction": "Questions 35-41: Do the following statements agree with the views of the writer? <br><br>Write:<br>YES - if the statement agrees with the views of the writer.<br>NO - if the statement contradicts the views of the writer.<br>NOT GIVEN - if it is impossible to say what the writer thinks about this.", "text": "35. The Pompidou has influenced the way cities are designed." },
                 { "id": 36, "type": "inline", "text": "36. The Guggenheim has been more popular than the Pompidou." },
                 { "id": 37, "type": "inline", "text": "37. The word building fits the Pompidou better than the word construction." },
                 { "id": 38, "type": "inline", "text": "38. The Pompidou’s appearance has changed considerably since it opened." },
