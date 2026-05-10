@@ -21,7 +21,17 @@
         .question-dot.wrong { background-color: #dc2626; color: white; }
         .cloze-input { border-bottom: 2px solid #3b82f6; border-top: none; border-left: none; border-right: none; background: transparent; outline: none; padding: 0 5px; font-weight: 600; text-align: center; min-width: 100px; }
         .cloze-input:focus { border-bottom-color: #1d4ed8; background: #eff6ff; }
-        .instruction-box { background-color: #f8fafc; border-left: 4px solid #94a3b8; padding: 12px; margin-bottom: 20px; font-style: italic; color: #475569; font-size: 0.95rem; }
+        /* Thêm white-space: pre-wrap để xử lý xuống dòng trong JSON */
+        .instruction-box { 
+            background-color: #f8fafc; 
+            border-left: 4px solid #94a3b8; 
+            padding: 12px; 
+            margin-bottom: 20px; 
+            font-style: italic; 
+            color: #475569; 
+            font-size: 0.95rem; 
+            white-space: pre-wrap; 
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 overflow-hidden">
@@ -29,7 +39,7 @@
     <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
         <div class="max-w-md w-full p-10 border rounded-2xl shadow-xl">
-            <h1 class="text-3xl font-black mb-2 text-blue-800 tracking-tighter">IELTS READING</h1>
+            <h1 class="text-3xl font-black mb-2 text-blue-800 tracking-tighter uppercase">IELTS Reading</h1>
             <p class="text-gray-500 mb-8 font-medium">Computer-delivered Simulation</p>
             <input type="text" id="user-name" placeholder="Enter your full name" class="w-full p-4 border-2 rounded-xl mb-4 focus:border-blue-500 outline-none transition">
             <button onclick="startTest()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg">Start Examination</button>
@@ -60,7 +70,9 @@
         <!-- Passage Side -->
         <div id="passage-side" class="w-1/2 p-10 overflow-y-auto border-r bg-white scroll-custom">
             <div id="passage-content" class="prose max-w-none font-serif text-lg leading-relaxed text-gray-800">
-                <!-- Content injected here -->
+                <div class="flex items-center justify-center h-full text-gray-400 italic">
+                    Loading passage content...
+                </div>
             </div>
         </div>
 
@@ -110,29 +122,50 @@
 
         async function loadData() {
             try {
+                // Sửa lỗi Parse URL bằng cách cung cấp URL rõ ràng hơn hoặc loại bỏ dấu ./
+                // Trong môi trường GitHub, dùng path tương đối là ổn, nhưng Canvas cần ổn định hơn.
+                const examPath = 'exam.json';
+                const answerPath = 'answers.json';
+
+                console.log("Attempting to fetch data files...");
+                
                 const [eRes, aRes] = await Promise.all([
-                    fetch('./exam.json'), 
-                    fetch('./answers.json')
+                    fetch(examPath).catch(err => { throw new Error("Failed to fetch exam.json: " + err.message) }), 
+                    fetch(answerPath).catch(err => { throw new Error("Failed to fetch answers.json: " + err.message) })
                 ]);
                 
-                if (!eRes.ok || !aRes.ok) throw new Error("Files not found");
+                if (!eRes.ok) throw new Error(`HTTP error! status: ${eRes.status} for exam.json`);
+                if (!aRes.ok) throw new Error(`HTTP error! status: ${aRes.status} for answers.json`);
 
                 examData = await eRes.json();
                 answerData = await aRes.json();
                 
                 if (examData && examData.sections) {
+                    console.log("Data loaded successfully.");
                     renderPassage();
                     renderNav();
+                } else {
+                    throw new Error("Invalid format in exam.json - 'sections' property missing.");
                 }
             } catch(e) {
-                console.error(e);
-                alert("Error: Ensure index.html, exam.json, and answers.json are in the same folder.");
+                console.error("Critical Loading Error:", e);
+                document.getElementById('passage-content').innerHTML = `
+                    <div class="p-6 bg-red-50 border border-red-200 rounded-xl text-red-700">
+                        <h3 class="font-bold text-lg mb-2">Error Loading Test Files</h3>
+                        <p class="text-sm mb-4">Please ensure that <strong>exam.json</strong> and <strong>answers.json</strong> are located in the same folder as this HTML file.</p>
+                        <code class="text-xs bg-red-100 p-2 block rounded">${e.message}</code>
+                        <button onclick="loadData()" class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg font-bold text-sm">Retry Loading</button>
+                    </div>
+                `;
             }
         }
 
         function startTest() {
             const name = document.getElementById('user-name').value.trim();
-            if (!name) return;
+            if (!name) {
+                alert("Please enter your name to continue.");
+                return;
+            }
             document.getElementById('display-name').innerText = name;
             document.getElementById('login-screen').classList.add('hidden');
             loadData();
@@ -142,14 +175,20 @@
         function startTimer() {
             timerInterval = setInterval(() => {
                 timeRemaining--;
-                if (timeRemaining <= 0) { clearInterval(timerInterval); submitTest(); }
+                if (timeRemaining <= 0) { 
+                    clearInterval(timerInterval); 
+                    submitTest(); 
+                }
                 const m = Math.floor(timeRemaining/60), s = timeRemaining%60;
                 document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
 
         function renderPassage() {
-            if (!examData || !examData.sections[currentPage]) return;
+            if (!examData || !examData.sections || !examData.sections[currentPage]) {
+                console.error("Cannot render passage: data missing for page", currentPage);
+                return;
+            }
             
             const section = examData.sections[currentPage];
             document.getElementById('passage-label').innerText = `Passage ${currentPage + 1} of 3`;
@@ -166,13 +205,14 @@
                 if (q.instruction) {
                     const inst = document.createElement('div');
                     inst.className = 'instruction-box';
-                    inst.innerHTML = `<strong>Instructions:</strong> ${q.instruction}`;
+                    // Render instruction (supports <br> and \n via CSS)
+                    inst.innerHTML = `<strong>Instructions:</strong><br>${q.instruction}`;
                     qList.appendChild(inst);
                 }
 
                 const card = document.createElement('div');
                 card.className = `p-8 bg-white border-2 rounded-2xl shadow-sm transition-all ${isReviewMode ? 'review-active' : ''}`;
-                card.id = `card-${q.id || q.ids?.[0]}`;
+                card.id = `card-${q.id || (q.ids && q.ids[0])}`;
                 
                 let html = '';
                 if (q.type === 'mc') {
@@ -227,7 +267,7 @@
                     const ids = q.ids || [q.id];
                     let reviewHtml = '';
                     ids.forEach(id => {
-                        if (!answerData[id]) return;
+                        if (!answerData || !answerData[id]) return;
                         const correct = answerData[id].answer.toUpperCase();
                         const user = (userAnswers[id] || "").toUpperCase();
                         const isCorrect = user === correct;
@@ -280,6 +320,7 @@
         }
 
         function changePage(dir) {
+            if (!examData) return;
             currentPage += dir;
             renderPassage();
         }
@@ -305,20 +346,25 @@
                 dot.classList.remove('current');
                 
                 // Highlight current passage questions
-                const currentSec = examData.sections[currentPage];
-                const belongsToPage = currentSec.questions.some(q => (q.id === i || (q.ids && q.ids.includes(i))));
-                if (belongsToPage) dot.classList.add('current');
+                if (examData && examData.sections[currentPage]) {
+                    const currentSec = examData.sections[currentPage];
+                    const belongsToPage = currentSec.questions.some(q => (q.id === i || (q.ids && q.ids.includes(i))));
+                    if (belongsToPage) dot.classList.add('current');
+                }
 
                 if (isReviewMode) {
-                    const isCorrect = (userAnswers[i] || "").toUpperCase() === (answerData[i] ? answerData[i].answer.toUpperCase() : "");
-                    dot.className = `question-dot ${isCorrect ? 'correct' : 'wrong'} ${belongsToPage ? 'current' : ''}`;
+                    const isCorrect = (userAnswers[i] || "").toUpperCase() === (answerData && answerData[i] ? answerData[i].answer.toUpperCase() : "");
+                    dot.className = dot.className.replace(/answered|unanswered|correct|wrong/g, '').trim();
+                    dot.classList.add(isCorrect ? 'correct' : 'wrong');
                 } else {
-                    dot.className = `question-dot ${userAnswers[i] ? 'answered' : 'unanswered'} ${belongsToPage ? 'current' : ''}`;
+                    dot.className = dot.className.replace(/answered|unanswered|correct|wrong/g, '').trim();
+                    dot.classList.add(userAnswers[i] ? 'answered' : 'unanswered');
                 }
             }
         }
 
         function jumpToQuestion(num) {
+            if (!examData) return;
             let targetPage = -1;
             examData.sections.forEach((sec, idx) => {
                 const hasQ = sec.questions.some(q => (q.id === num || (q.ids && q.ids.includes(num))));
@@ -335,16 +381,18 @@
         }
 
         function confirmSubmit() {
-            if (confirm("Are you sure you want to submit your work?")) submitTest();
+            if (confirm("Are you sure you want to finish the test?")) submitTest();
         }
 
         function submitTest() {
             clearInterval(timerInterval);
             let correct = 0;
-            for (let i=1; i<=40; i++) {
-                const u = (userAnswers[i] || "").toUpperCase();
-                const c = (answerData[i] ? answerData[i].answer.toUpperCase() : "");
-                if (u === c && c !== "") correct++;
+            if (answerData) {
+                for (let i=1; i<=40; i++) {
+                    const u = (userAnswers[i] || "").toUpperCase();
+                    const c = (answerData[i] ? answerData[i].answer.toUpperCase() : "");
+                    if (u === c && c !== "") correct++;
+                }
             }
             const band = (correct >= 39) ? 9.0 : (correct >= 37) ? 8.5 : (correct >= 35) ? 8.0 : (correct >= 33) ? 7.5 : (correct >= 30) ? 7.0 : (correct >= 27) ? 6.5 : (correct >= 23) ? 6.0 : (correct >= 19) ? 5.5 : (correct >= 15) ? 5.0 : (correct >= 13) ? 4.5 : (correct >= 10) ? 4.0 : 3.5;
             document.getElementById('score-display').innerText = band.toFixed(1);
