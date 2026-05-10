@@ -3,284 +3,347 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Reading Simulation</title>
+    <title>IELTS Reading Simulation - Advanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
         body { font-family: 'Inter', sans-serif; }
-        
-        .split-container {
-            height: calc(100vh - 140px);
-        }
-
-        .scroll-custom::-webkit-scrollbar {
-            width: 8px;
-        }
-        .scroll-custom::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        .scroll-custom::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
-        }
-        .scroll-custom::-webkit-scrollbar-thumb:hover {
-            background: #999;
-        }
-
-        .highlight-location {
-            background-color: #fef08a; /* Yellow-200 */
-            font-weight: 600;
-            padding: 0 2px;
-            border-radius: 2px;
-        }
-
-        .question-dot {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .question-dot.answered { background-color: #3b82f6; color: white; }
-        .question-dot.unanswered { border: 2px solid #d1d5db; color: #4b5563; }
-        .question-dot.current { border: 2px solid #3b82f6; background-color: #eff6ff; }
-        .question-dot.correct { background-color: #22c55e; color: white; }
-        .question-dot.wrong { background-color: #ef4444; color: white; }
+        .split-container { height: calc(100vh - 160px); }
+        .scroll-custom::-webkit-scrollbar { width: 6px; }
+        .scroll-custom::-webkit-scrollbar-track { background: #f1f1f1; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+        .highlight-location { background-color: #fef08a; font-weight: 600; padding: 0 4px; border-radius: 4px; box-shadow: 0 0 0 2px #fef08a; }
+        .question-dot { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+        .question-dot.answered { background-color: #1d4ed8; color: white; }
+        .question-dot.unanswered { border: 1px solid #d1d5db; color: #6b7280; }
+        .question-dot.current { border: 2px solid #1d4ed8; background-color: #eff6ff; }
+        .question-dot.correct { background-color: #16a34a; color: white; }
+        .question-dot.wrong { background-color: #dc2626; color: white; }
+        .cloze-input { border-bottom: 2px solid #3b82f6; border-top: none; border-left: none; border-right: none; background: transparent; outline: none; padding: 0 5px; font-weight: 600; text-align: center; min-width: 80px; width: auto; }
+        .cloze-input:focus { border-bottom-color: #1d4ed8; background: #eff6ff; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 overflow-hidden">
 
-    <!-- Login Overlay -->
+    <!-- Login -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
-        <div class="max-w-md w-full p-8 border rounded-xl shadow-lg bg-white">
-            <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">IELTS Reading Test</h1>
-            <p class="text-gray-600 mb-6 text-center">Please enter your full name to start the simulation.</p>
-            <input type="text" id="user-name" placeholder="Full Name" class="w-full p-3 border rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 outline-none">
-            <button onclick="startTest()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Start Exam</button>
-            <p class="mt-4 text-xs text-center text-gray-400 italic">Reading Module: 60 Minutes | 40 Questions</p>
+        <div class="max-w-md w-full p-10 border rounded-2xl shadow-xl">
+            <h1 class="text-3xl font-black mb-2 text-blue-800">IELTS READING</h1>
+            <p class="text-gray-500 mb-8 font-medium">Computer-delivered Simulation</p>
+            <input type="text" id="user-name" placeholder="Enter your full name" class="w-full p-4 border-2 rounded-xl mb-4 focus:border-blue-500 outline-none transition">
+            <button onclick="startTest()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg">Start Examination</button>
+            <div class="mt-6 flex justify-between text-xs text-gray-400 font-bold uppercase tracking-widest">
+                <span>60 Minutes</span>
+                <span>40 Questions</span>
+            </div>
         </div>
     </div>
 
     <!-- Header -->
-    <header class="bg-white border-b px-6 py-3 flex justify-between items-center shadow-sm relative z-10">
-        <div class="flex items-center gap-4">
-            <h2 class="text-xl font-bold text-blue-700">IELTS Simulation</h2>
-            <span id="display-name" class="bg-gray-100 px-3 py-1 rounded-full text-sm font-medium">Candidate: ---</span>
+    <header class="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm relative z-10">
+        <div class="flex items-center gap-6">
+            <div class="text-blue-700 font-black text-xl tracking-tighter">IELTS<span class="text-gray-400 font-light ml-1">SIM</span></div>
+            <div id="display-name" class="text-sm font-bold text-gray-600 border-l pl-6 uppercase tracking-wider">---</div>
         </div>
         
-        <div id="timer" class="text-2xl font-mono font-bold text-red-600 bg-red-50 px-4 py-1 rounded-lg border border-red-200">
-            60:00
-        </div>
+        <div id="timer" class="text-2xl font-mono font-black text-red-600 bg-red-50 px-6 py-2 rounded-xl border-2 border-red-100 animate-pulse">60:00</div>
 
-        <button id="submit-btn" onclick="confirmSubmit()" class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition">Submit Work</button>
-        <button id="exit-review-btn" onclick="location.reload()" class="hidden bg-gray-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-gray-700 transition">Exit Review</button>
+        <div class="flex gap-3">
+            <button id="submit-btn" onclick="confirmSubmit()" class="bg-green-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-green-700 transition shadow-md">Finish Test</button>
+            <button id="exit-btn" onclick="location.reload()" class="hidden bg-gray-200 text-gray-700 px-8 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition">Exit Review</button>
+        </div>
     </header>
 
     <!-- Main Content -->
     <main class="flex split-container">
         <!-- Passage Side -->
-        <div id="passage-container" class="w-1/2 p-8 overflow-y-auto border-r bg-white scroll-custom prose max-w-none">
-            <h1 id="passage-title" class="text-3xl font-serif font-bold mb-6 italic">Loading passage...</h1>
-            <div id="passage-content" class="text-lg leading-relaxed space-y-4 font-serif text-gray-800">
-                <!-- Text with ID spans for highlighting -->
+        <div id="passage-side" class="w-1/2 p-10 overflow-y-auto border-r bg-white scroll-custom">
+            <div id="passage-content" class="prose max-w-none font-serif text-lg leading-relaxed text-gray-800">
+                <!-- Content injected here -->
             </div>
         </div>
 
         <!-- Questions Side -->
-        <div id="questions-container" class="w-1/2 p-8 overflow-y-auto bg-gray-50 scroll-custom">
-            <div id="questions-list" class="space-y-12">
+        <div id="question-side" class="w-1/2 p-10 overflow-y-auto bg-gray-50 scroll-custom">
+            <div class="mb-6 flex justify-between items-center bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <span id="passage-label" class="font-bold text-blue-800 uppercase tracking-widest text-sm">Passage 1 of 3</span>
+                <div class="flex gap-2">
+                    <button id="prev-page" onclick="changePage(-1)" class="p-2 bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-30">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button id="next-page" onclick="changePage(1)" class="p-2 bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-30">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="questions-list" class="space-y-10">
                 <!-- Questions injected here -->
             </div>
         </div>
     </main>
 
-    <!-- Footer Navigation -->
-    <footer class="fixed bottom-0 left-0 right-0 h-24 bg-white border-t px-6 py-3 flex items-center gap-3 overflow-x-auto">
-        <div class="flex-shrink-0 font-bold text-gray-500 mr-2 uppercase text-xs tracking-wider">Questions:</div>
-        <div id="nav-dots" class="flex gap-2">
-            <!-- Navigation dots injected here -->
-        </div>
+    <!-- Footer -->
+    <footer class="fixed bottom-0 left-0 right-0 h-24 bg-white border-t px-8 py-3 flex items-center gap-4 overflow-x-auto">
+        <span class="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Review<br>Panel</span>
+        <div id="nav-dots" class="flex gap-2.5"></div>
     </footer>
 
-    <!-- Score Result Modal -->
-    <div id="result-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black bg-opacity-50">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
-            <h2 class="text-2xl font-bold mb-2">Test Completed!</h2>
-            <p class="text-gray-600 mb-6">Your IELTS Reading Score</p>
-            <div class="text-6xl font-black text-blue-600 mb-2" id="score-display">0.0</div>
-            <p class="text-lg font-medium text-gray-700 mb-6" id="raw-score-display">0/40 correct</p>
-            <div class="flex flex-col gap-3">
-                <button onclick="reviewTest()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">Review Answers</button>
-                <button onclick="location.reload()" class="w-full text-gray-500 font-medium py-2 hover:underline">Try Another Test</button>
-            </div>
+    <!-- Result Modal -->
+    <div id="result-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="bg-white p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center border-4 border-blue-100">
+            <h2 class="text-2xl font-black mb-2">Examination Complete</h2>
+            <p class="text-gray-500 mb-8 font-medium">Your Reading Band Score</p>
+            <div class="text-7xl font-black text-blue-600 mb-4 tracking-tighter" id="score-display">0.0</div>
+            <p class="text-lg font-bold text-gray-800 mb-8" id="raw-score-display">0/40 correct</p>
+            <button onclick="reviewTest()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition shadow-lg">Review My Answers</button>
         </div>
     </div>
 
     <script>
-        let testData = null;
+        let examData = null;
         let answerData = null;
         let userAnswers = {};
-        let timeRemaining = 3600; // 60 minutes
+        let currentPage = 0;
+        let timeRemaining = 3600;
         let timerInterval = null;
         let isReviewMode = false;
 
-        async function loadTestData() {
+        async function loadData() {
             try {
-                // Fetching from separate JSON files
-                const [examRes, ansRes] = await Promise.all([
-                    fetch('exam.json'),
-                    fetch('answers.json')
+                // Using relative paths with ./ for better environment compatibility
+                const [eRes, aRes] = await Promise.all([
+                    fetch('./exam.json'), 
+                    fetch('./answers.json')
                 ]);
-                testData = await examRes.json();
-                answerData = await ansRes.json();
                 
-                renderTest();
-            } catch (err) {
-                console.error("Error loading data. Make sure files exist in the same folder.", err);
-                document.getElementById('passage-content').innerHTML = "<p class='text-red-500'>Error loading exam data. Please ensure exam.json and answers.json are available on the server.</p>";
+                if (!eRes.ok || !aRes.ok) {
+                    throw new Error("Could not find exam.json or answers.json");
+                }
+
+                examData = await eRes.json();
+                answerData = await aRes.json();
+                
+                if (examData && examData.sections) {
+                    renderPassage();
+                    renderNav();
+                } else {
+                    throw new Error("Invalid data format in exam.json");
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Error loading test files. Please ensure 'index.html', 'exam.json', and 'answers.json' are in the same folder.");
             }
         }
 
         function startTest() {
             const name = document.getElementById('user-name').value.trim();
-            if (!name) {
-                alert("Please enter your name");
-                return;
-            }
-            document.getElementById('display-name').innerText = `Candidate: ${name}`;
-            document.getElementById('login-screen').style.display = 'none';
-            
+            if (!name) return;
+            document.getElementById('display-name').innerText = name;
+            document.getElementById('login-screen').classList.add('hidden');
+            loadData();
             startTimer();
-            loadTestData();
         }
 
         function startTimer() {
             timerInterval = setInterval(() => {
                 timeRemaining--;
-                if (timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    submitTest();
+                if (timeRemaining <= 0) { 
+                    clearInterval(timerInterval); 
+                    submitTest(); 
                 }
-                updateTimerDisplay();
+                const m = Math.floor(timeRemaining/60), s = timeRemaining%60;
+                document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
 
-        function updateTimerDisplay() {
-            const mins = Math.floor(timeRemaining / 60);
-            const secs = timeRemaining % 60;
-            document.getElementById('timer').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function renderTest() {
-            document.getElementById('passage-title').innerText = testData.title;
-            document.getElementById('passage-content').innerHTML = testData.passage;
+        function renderPassage() {
+            // Null check to prevent "Cannot read properties of null (reading 'sections')"
+            if (!examData || !examData.sections || !examData.sections[currentPage]) return;
+            
+            const section = examData.sections[currentPage];
+            document.getElementById('passage-label').innerText = `Passage ${currentPage + 1} of 3`;
+            document.getElementById('passage-content').innerHTML = `
+                <h1 class="text-3xl font-black mb-6 italic text-gray-900">${section.title}</h1>
+                <div class="passage-text">${section.content}</div>
+            `;
             
             const qList = document.getElementById('questions-list');
-            const navDots = document.getElementById('nav-dots');
             qList.innerHTML = '';
-            navDots.innerHTML = '';
-
-            testData.questions.forEach((q, idx) => {
-                const qNum = idx + 1;
+            
+            section.questions.forEach(q => {
+                const card = document.createElement('div');
+                card.className = `p-8 bg-white border-2 rounded-2xl shadow-sm transition-all ${isReviewMode ? 'review-active' : ''}`;
+                card.id = `card-${q.id || q.ids?.[0]}`;
                 
-                // Render Question UI
-                const qEl = document.createElement('div');
-                qEl.id = `q-block-${qNum}`;
-                qEl.className = 'p-6 bg-white border rounded-xl shadow-sm transition';
-                qEl.innerHTML = `
-                    <div class="flex items-start gap-4">
-                        <span class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 font-bold">${qNum}</span>
-                        <div class="flex-grow">
-                            <p class="text-lg font-medium mb-4">${q.text}</p>
-                            <div class="space-y-2" id="options-${qNum}">
-                                ${q.type === 'multiple-choice' ? 
-                                    q.options.map(opt => `
-                                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
-                                            <input type="radio" name="q${qNum}" value="${opt}" onchange="saveAnswer(${qNum}, '${opt}')" class="w-4 h-4 text-blue-600">
-                                            <span class="ml-3">${opt}</span>
+                let html = '';
+                if (q.type === 'mc') {
+                    html = `
+                        <div class="flex gap-4">
+                            <span class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold flex-shrink-0">${q.id}</span>
+                            <div class="w-full">
+                                <p class="font-bold text-lg mb-4">${q.text}</p>
+                                <div class="grid gap-2">
+                                    ${q.options.map(opt => `
+                                        <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition group">
+                                            <input type="radio" name="q${q.id}" value="${opt}" ${userAnswers[q.id] === opt ? 'checked' : ''} onchange="saveAns(${q.id}, '${opt}')" class="w-5 h-5 text-blue-600">
+                                            <span class="ml-4 font-medium text-gray-700">${opt}</span>
                                         </label>
-                                    `).join('') : 
-                                    `<input type="text" placeholder="Type answer here..." oninput="saveAnswer(${qNum}, this.value)" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none uppercase font-semibold">`
-                                }
+                                    `).join('')}
+                                </div>
                             </div>
-                            <div id="explanation-${qNum}" class="hidden mt-4 p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800"></div>
                         </div>
-                    </div>
-                `;
-                qList.appendChild(qEl);
+                    `;
+                } else if (q.type === 'cloze') {
+                    let clozeText = q.text;
+                    q.ids.forEach(id => {
+                        const val = userAnswers[id] || '';
+                        clozeText = clozeText.replace(`{${id}}`, `<input type="text" class="cloze-input" value="${val}" oninput="this.style.width = ((this.value.length + 1) * 10) + 'px'; saveAns(${id}, this.value)" placeholder="...">`);
+                    });
+                    html = `<div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 leading-loose font-medium text-gray-700">${clozeText}</div>`;
+                } else if (q.type === 'multi') {
+                    html = `
+                        <div class="w-full">
+                            <p class="font-bold text-lg mb-4">${q.text}</p>
+                            <div class="grid gap-2">
+                                ${q.options.map(opt => `
+                                    <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition">
+                                        <input type="checkbox" onchange="saveMulti(${JSON.stringify(q.ids)}, '${opt}')" ${isMultiChecked(q.ids, opt) ? 'checked' : ''} class="w-5 h-5 rounded">
+                                        <span class="ml-4 font-medium">${opt}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else if (q.type === 'inline') {
+                    html = `
+                        <div class="flex items-center gap-4 py-2 border-b border-dashed border-gray-200">
+                            <span class="w-7 h-7 rounded bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">${q.id}</span>
+                            <p class="flex-grow font-medium">${q.text}</p>
+                            <input type="text" value="${userAnswers[q.id] || ''}" oninput="saveAns(${q.id}, this.value)" class="p-2 border-2 rounded-lg w-32 font-bold uppercase focus:border-blue-500 outline-none">
+                        </div>
+                    `;
+                }
+                
+                if (isReviewMode) {
+                    const ids = q.ids || [q.id];
+                    let reviewHtml = '';
+                    ids.forEach(id => {
+                        if (!answerData[id]) return;
+                        const correct = answerData[id].answer.toUpperCase();
+                        const user = (userAnswers[id] || "").toUpperCase();
+                        const isCorrect = user === correct;
+                        reviewHtml += `
+                            <div class="mt-4 p-4 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} rounded-xl text-sm">
+                                <div class="font-black mb-1">Question ${id}: ${isCorrect ? '✓ CORRECT' : '✗ INCORRECT'}</div>
+                                <div><span class="opacity-60">Answer:</span> <span class="font-bold">${correct}</span></div>
+                                <div class="mt-2 text-xs italic opacity-80">${answerData[id].explanation}</div>
+                                <button onclick="gotoLoc('${answerData[id].locationId}')" class="mt-3 font-bold text-blue-600 hover:underline">Find in passage ↑</button>
+                            </div>
+                        `;
+                    });
+                    html += reviewHtml;
+                }
 
-                // Render Nav Dot
-                const dot = document.createElement('div');
-                dot.id = `dot-${qNum}`;
-                dot.className = 'question-dot unanswered';
-                dot.innerText = qNum;
-                dot.onclick = () => document.getElementById(`q-block-${qNum}`).scrollIntoView({ behavior: 'smooth' });
-                navDots.appendChild(dot);
+                card.innerHTML = html;
+                qList.appendChild(card);
             });
+
+            document.getElementById('prev-page').disabled = (currentPage === 0);
+            document.getElementById('next-page').disabled = (currentPage === 2);
+            document.getElementById('passage-side').scrollTop = 0;
+            document.getElementById('question-side').scrollTop = 0;
         }
 
-        function saveAnswer(qNum, value) {
+        function saveAns(id, val) {
             if (isReviewMode) return;
-            userAnswers[qNum] = value.trim().toUpperCase();
-            
-            const dot = document.getElementById(`dot-${qNum}`);
-            if (value.trim()) {
-                dot.classList.remove('unanswered');
-                dot.classList.add('answered');
+            userAnswers[id] = val.trim();
+            updateNav();
+        }
+
+        function saveMulti(ids, val) {
+            if (isReviewMode) return;
+            if (isMultiChecked(ids, val)) {
+                const idToRemove = ids.find(id => userAnswers[id] === val);
+                delete userAnswers[idToRemove];
             } else {
-                dot.classList.remove('answered');
-                dot.classList.add('unanswered');
+                const firstEmptyId = ids.find(id => !userAnswers[id]);
+                if (firstEmptyId) {
+                    userAnswers[firstEmptyId] = val;
+                }
             }
+            updateNav();
+            renderPassage();
+        }
+
+        function isMultiChecked(ids, val) {
+            return ids.some(id => userAnswers[id] === val);
+        }
+
+        function changePage(dir) {
+            if (!examData) return;
+            currentPage += dir;
+            renderPassage();
+        }
+
+        function renderNav() {
+            const nav = document.getElementById('nav-dots');
+            nav.innerHTML = '';
+            for (let i=1; i<=40; i++) {
+                const dot = document.createElement('div');
+                dot.id = `dot-${i}`;
+                dot.className = 'question-dot unanswered';
+                dot.innerText = i;
+                dot.onclick = () => jumpToQuestion(i);
+                nav.appendChild(dot);
+            }
+            updateNav();
+        }
+
+        function updateNav() {
+            for (let i=1; i<=40; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if (!dot) continue;
+                if (isReviewMode) {
+                    const isCorrect = (userAnswers[i] || "").toUpperCase() === (answerData[i] ? answerData[i].answer.toUpperCase() : "");
+                    dot.className = `question-dot ${isCorrect ? 'correct' : 'wrong'}`;
+                } else {
+                    dot.className = `question-dot ${userAnswers[i] ? 'answered' : 'unanswered'}`;
+                }
+            }
+        }
+
+        function jumpToQuestion(num) {
+            if (!examData) return;
+            let targetPage = -1;
+            examData.sections.forEach((sec, idx) => {
+                const hasQ = sec.questions.some(q => (q.id === num || (q.ids && q.ids.includes(num))));
+                if (hasQ) targetPage = idx;
+            });
+            if (targetPage !== -1 && targetPage !== currentPage) {
+                currentPage = targetPage;
+                renderPassage();
+            }
+            setTimeout(() => {
+                const el = document.getElementById(`card-${num}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
         }
 
         function confirmSubmit() {
-            const answeredCount = Object.keys(userAnswers).length;
-            const total = testData.questions.length;
-            if (confirm(`You have answered ${answeredCount}/${total} questions. Do you want to submit?`)) {
-                submitTest();
-            }
-        }
-
-        function calculateBandScore(correct) {
-            // Standard IELTS Reading (Academic) mapping roughly
-            if (correct >= 39) return 9.0;
-            if (correct >= 37) return 8.5;
-            if (correct >= 35) return 8.0;
-            if (correct >= 33) return 7.5;
-            if (correct >= 30) return 7.0;
-            if (correct >= 27) return 6.5;
-            if (correct >= 23) return 6.0;
-            if (correct >= 19) return 5.5;
-            if (correct >= 15) return 5.0;
-            if (correct >= 13) return 4.5;
-            if (correct >= 10) return 4.0;
-            return 3.5;
+            if (confirm("Are you sure you want to finish the test?")) submitTest();
         }
 
         function submitTest() {
             clearInterval(timerInterval);
-            let correctCount = 0;
-            
-            testData.questions.forEach((q, idx) => {
-                const qNum = idx + 1;
-                const userAns = userAnswers[qNum] || "";
-                const correctAns = answerData[qNum].answer.toUpperCase();
-                
-                if (userAns === correctAns) {
-                    correctCount++;
-                }
-            });
-
-            const band = calculateBandScore(correctCount);
+            let correct = 0;
+            for (let i=1; i<=40; i++) {
+                const uAns = (userAnswers[i] || "").toUpperCase();
+                const cAns = (answerData[i] ? answerData[i].answer.toUpperCase() : "");
+                if (uAns === cAns && cAns !== "") correct++;
+            }
+            const band = (correct >= 39) ? 9.0 : (correct >= 37) ? 8.5 : (correct >= 35) ? 8.0 : (correct >= 33) ? 7.5 : (correct >= 30) ? 7.0 : (correct >= 27) ? 6.5 : (correct >= 23) ? 6.0 : (correct >= 19) ? 5.5 : (correct >= 15) ? 5.0 : (correct >= 13) ? 4.5 : (correct >= 10) ? 4.0 : 3.5;
             document.getElementById('score-display').innerText = band.toFixed(1);
-            document.getElementById('raw-score-display').innerText = `${correctCount}/${testData.questions.length} correct answers`;
+            document.getElementById('raw-score-display').innerText = `${correct}/40 correct`;
             document.getElementById('result-modal').classList.remove('hidden');
         }
 
@@ -288,47 +351,15 @@
             isReviewMode = true;
             document.getElementById('result-modal').classList.add('hidden');
             document.getElementById('submit-btn').classList.add('hidden');
-            document.getElementById('exit-review-btn').classList.remove('hidden');
-            document.getElementById('timer').classList.add('hidden');
-
-            testData.questions.forEach((q, idx) => {
-                const qNum = idx + 1;
-                const userAns = userAnswers[qNum] || "(No Answer)";
-                const correctAns = answerData[qNum].answer.toUpperCase();
-                const isCorrect = userAns === correctAns;
-
-                const qBlock = document.getElementById(`q-block-${qNum}`);
-                const dot = document.getElementById(`dot-${qNum}`);
-                const expBox = document.getElementById(`explanation-${qNum}`);
-
-                // Style Q block
-                qBlock.classList.add(isCorrect ? 'border-green-500' : 'border-red-500');
-                qBlock.classList.add(isCorrect ? 'bg-green-50' : 'bg-red-50');
-
-                // Style Dot
-                dot.className = `question-dot ${isCorrect ? 'correct' : 'wrong'}`;
-
-                // Show Explanation
-                expBox.classList.remove('hidden');
-                expBox.innerHTML = `
-                    <div class="font-bold mb-1">Result: ${isCorrect ? 'Correct' : 'Incorrect'}</div>
-                    <div><strong>Your Answer:</strong> ${userAns}</div>
-                    <div><strong>Correct Answer:</strong> ${correctAns}</div>
-                    <div class="mt-2 pt-2 border-t border-blue-200"><strong>Explanation:</strong> ${answerData[qNum].explanation}</div>
-                    <button onclick="highlightInPassage('${answerData[qNum].locationId}')" class="mt-3 text-blue-600 font-bold hover:underline flex items-center gap-1">
-                        View in passage ↓
-                    </button>
-                `;
-            });
+            document.getElementById('exit-btn').classList.remove('hidden');
+            currentPage = 0;
+            renderPassage();
+            updateNav();
         }
 
-        function highlightInPassage(locationId) {
-            // Remove previous highlights
-            document.querySelectorAll('.highlight-location').forEach(el => {
-                el.classList.remove('highlight-location');
-            });
-
-            const target = document.getElementById(locationId);
+        function gotoLoc(id) {
+            document.querySelectorAll('.highlight-location').forEach(el => el.classList.remove('highlight-location'));
+            const target = document.getElementById(id);
             if (target) {
                 target.classList.add('highlight-location');
                 target.scrollIntoView({ behavior: 'smooth', block: 'center' });
