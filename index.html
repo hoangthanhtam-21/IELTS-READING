@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Reading Simulation - Advanced</title>
+    <title>IELTS Reading Simulation - Full Content</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -19,16 +19,17 @@
         .question-dot.current { border: 2px solid #1d4ed8; background-color: #eff6ff; }
         .question-dot.correct { background-color: #16a34a; color: white; }
         .question-dot.wrong { background-color: #dc2626; color: white; }
-        .cloze-input { border-bottom: 2px solid #3b82f6; border-top: none; border-left: none; border-right: none; background: transparent; outline: none; padding: 0 5px; font-weight: 600; text-align: center; min-width: 80px; width: auto; }
+        .cloze-input { border-bottom: 2px solid #3b82f6; border-top: none; border-left: none; border-right: none; background: transparent; outline: none; padding: 0 5px; font-weight: 600; text-align: center; min-width: 100px; }
         .cloze-input:focus { border-bottom-color: #1d4ed8; background: #eff6ff; }
+        .instruction-box { background-color: #f8fafc; border-left: 4px solid #94a3b8; padding: 12px; margin-bottom: 20px; font-style: italic; color: #475569; font-size: 0.95rem; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 overflow-hidden">
 
-    <!-- Login -->
+    <!-- Login Screen -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
         <div class="max-w-md w-full p-10 border rounded-2xl shadow-xl">
-            <h1 class="text-3xl font-black mb-2 text-blue-800">IELTS READING</h1>
+            <h1 class="text-3xl font-black mb-2 text-blue-800 tracking-tighter">IELTS READING</h1>
             <p class="text-gray-500 mb-8 font-medium">Computer-delivered Simulation</p>
             <input type="text" id="user-name" placeholder="Enter your full name" class="w-full p-4 border-2 rounded-xl mb-4 focus:border-blue-500 outline-none transition">
             <button onclick="startTest()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg">Start Examination</button>
@@ -84,18 +85,17 @@
 
     <!-- Footer -->
     <footer class="fixed bottom-0 left-0 right-0 h-24 bg-white border-t px-8 py-3 flex items-center gap-4 overflow-x-auto">
-        <span class="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Review<br>Panel</span>
-        <div id="nav-dots" class="flex gap-2.5"></div>
+        <div id="nav-dots" class="flex gap-2.5 mx-auto"></div>
     </footer>
 
     <!-- Result Modal -->
     <div id="result-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div class="bg-white p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center border-4 border-blue-100">
-            <h2 class="text-2xl font-black mb-2">Examination Complete</h2>
-            <p class="text-gray-500 mb-8 font-medium">Your Reading Band Score</p>
+            <h2 class="text-2xl font-black mb-2 text-gray-800">Examination Complete</h2>
+            <p class="text-gray-500 mb-8 font-medium">Your Estimated Band Score</p>
             <div class="text-7xl font-black text-blue-600 mb-4 tracking-tighter" id="score-display">0.0</div>
             <p class="text-lg font-bold text-gray-800 mb-8" id="raw-score-display">0/40 correct</p>
-            <button onclick="reviewTest()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition shadow-lg">Review My Answers</button>
+            <button onclick="reviewTest()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transition shadow-lg">Review Answers</button>
         </div>
     </div>
 
@@ -110,15 +110,12 @@
 
         async function loadData() {
             try {
-                // Using relative paths with ./ for better environment compatibility
                 const [eRes, aRes] = await Promise.all([
                     fetch('./exam.json'), 
                     fetch('./answers.json')
                 ]);
                 
-                if (!eRes.ok || !aRes.ok) {
-                    throw new Error("Could not find exam.json or answers.json");
-                }
+                if (!eRes.ok || !aRes.ok) throw new Error("Files not found");
 
                 examData = await eRes.json();
                 answerData = await aRes.json();
@@ -126,12 +123,10 @@
                 if (examData && examData.sections) {
                     renderPassage();
                     renderNav();
-                } else {
-                    throw new Error("Invalid data format in exam.json");
                 }
             } catch(e) {
                 console.error(e);
-                alert("Error loading test files. Please ensure 'index.html', 'exam.json', and 'answers.json' are in the same folder.");
+                alert("Error: Ensure index.html, exam.json, and answers.json are in the same folder.");
             }
         }
 
@@ -147,30 +142,34 @@
         function startTimer() {
             timerInterval = setInterval(() => {
                 timeRemaining--;
-                if (timeRemaining <= 0) { 
-                    clearInterval(timerInterval); 
-                    submitTest(); 
-                }
+                if (timeRemaining <= 0) { clearInterval(timerInterval); submitTest(); }
                 const m = Math.floor(timeRemaining/60), s = timeRemaining%60;
                 document.getElementById('timer').innerText = `${m}:${s.toString().padStart(2,'0')}`;
             }, 1000);
         }
 
         function renderPassage() {
-            // Null check to prevent "Cannot read properties of null (reading 'sections')"
-            if (!examData || !examData.sections || !examData.sections[currentPage]) return;
+            if (!examData || !examData.sections[currentPage]) return;
             
             const section = examData.sections[currentPage];
             document.getElementById('passage-label').innerText = `Passage ${currentPage + 1} of 3`;
             document.getElementById('passage-content').innerHTML = `
-                <h1 class="text-3xl font-black mb-6 italic text-gray-900">${section.title}</h1>
-                <div class="passage-text">${section.content}</div>
+                <h1 class="text-3xl font-black mb-6 italic text-gray-900 border-b-4 border-blue-600 inline-block pb-1 uppercase tracking-tight">${section.title}</h1>
+                <div class="passage-text leading-loose space-y-6">${section.content}</div>
             `;
             
             const qList = document.getElementById('questions-list');
             qList.innerHTML = '';
             
-            section.questions.forEach(q => {
+            section.questions.forEach((q, idx) => {
+                // Instruction block
+                if (q.instruction) {
+                    const inst = document.createElement('div');
+                    inst.className = 'instruction-box';
+                    inst.innerHTML = `<strong>Instructions:</strong> ${q.instruction}`;
+                    qList.appendChild(inst);
+                }
+
                 const card = document.createElement('div');
                 card.className = `p-8 bg-white border-2 rounded-2xl shadow-sm transition-all ${isReviewMode ? 'review-active' : ''}`;
                 card.id = `card-${q.id || q.ids?.[0]}`;
@@ -197,9 +196,9 @@
                     let clozeText = q.text;
                     q.ids.forEach(id => {
                         const val = userAnswers[id] || '';
-                        clozeText = clozeText.replace(`{${id}}`, `<input type="text" class="cloze-input" value="${val}" oninput="this.style.width = ((this.value.length + 1) * 10) + 'px'; saveAns(${id}, this.value)" placeholder="...">`);
+                        clozeText = clozeText.replace(`{${id}}`, `<input type="text" class="cloze-input" value="${val}" oninput="saveAns(${id}, this.value)" placeholder="...">`);
                     });
-                    html = `<div class="bg-blue-50/50 p-6 rounded-xl border border-blue-100 leading-loose font-medium text-gray-700">${clozeText}</div>`;
+                    html = `<div class="p-2 leading-loose font-medium text-gray-700">${clozeText}</div>`;
                 } else if (q.type === 'multi') {
                     html = `
                         <div class="w-full">
@@ -216,10 +215,10 @@
                     `;
                 } else if (q.type === 'inline') {
                     html = `
-                        <div class="flex items-center gap-4 py-2 border-b border-dashed border-gray-200">
+                        <div class="flex items-center gap-4 py-3 border-b border-gray-100">
                             <span class="w-7 h-7 rounded bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">${q.id}</span>
                             <p class="flex-grow font-medium">${q.text}</p>
-                            <input type="text" value="${userAnswers[q.id] || ''}" oninput="saveAns(${q.id}, this.value)" class="p-2 border-2 rounded-lg w-32 font-bold uppercase focus:border-blue-500 outline-none">
+                            <input type="text" value="${userAnswers[q.id] || ''}" oninput="saveAns(${q.id}, this.value)" class="p-2 border-2 rounded-lg w-36 font-bold uppercase focus:border-blue-500 outline-none text-center">
                         </div>
                     `;
                 }
@@ -233,11 +232,13 @@
                         const user = (userAnswers[id] || "").toUpperCase();
                         const isCorrect = user === correct;
                         reviewHtml += `
-                            <div class="mt-4 p-4 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} rounded-xl text-sm">
+                            <div class="mt-4 p-4 ${isCorrect ? 'bg-green-50 text-green-800 border-green-200' : 'bg-red-50 text-red-800 border-red-200'} border rounded-xl text-sm">
                                 <div class="font-black mb-1">Question ${id}: ${isCorrect ? '✓ CORRECT' : '✗ INCORRECT'}</div>
-                                <div><span class="opacity-60">Answer:</span> <span class="font-bold">${correct}</span></div>
-                                <div class="mt-2 text-xs italic opacity-80">${answerData[id].explanation}</div>
-                                <button onclick="gotoLoc('${answerData[id].locationId}')" class="mt-3 font-bold text-blue-600 hover:underline">Find in passage ↑</button>
+                                <div><span class="opacity-60">Correct Answer:</span> <span class="font-bold text-lg">${correct}</span></div>
+                                <div class="mt-2 text-xs italic opacity-80 leading-relaxed"><strong>Reason:</strong> ${answerData[id].explanation}</div>
+                                <button onclick="gotoLoc('${answerData[id].locationId}')" class="mt-3 font-bold text-blue-600 hover:underline flex items-center gap-1">
+                                    Show Location in Passage ↓
+                                </button>
                             </div>
                         `;
                     });
@@ -252,6 +253,7 @@
             document.getElementById('next-page').disabled = (currentPage === 2);
             document.getElementById('passage-side').scrollTop = 0;
             document.getElementById('question-side').scrollTop = 0;
+            updateNav();
         }
 
         function saveAns(id, val) {
@@ -267,9 +269,7 @@
                 delete userAnswers[idToRemove];
             } else {
                 const firstEmptyId = ids.find(id => !userAnswers[id]);
-                if (firstEmptyId) {
-                    userAnswers[firstEmptyId] = val;
-                }
+                if (firstEmptyId) userAnswers[firstEmptyId] = val;
             }
             updateNav();
             renderPassage();
@@ -280,7 +280,6 @@
         }
 
         function changePage(dir) {
-            if (!examData) return;
             currentPage += dir;
             renderPassage();
         }
@@ -303,17 +302,23 @@
             for (let i=1; i<=40; i++) {
                 const dot = document.getElementById(`dot-${i}`);
                 if (!dot) continue;
+                dot.classList.remove('current');
+                
+                // Highlight current passage questions
+                const currentSec = examData.sections[currentPage];
+                const belongsToPage = currentSec.questions.some(q => (q.id === i || (q.ids && q.ids.includes(i))));
+                if (belongsToPage) dot.classList.add('current');
+
                 if (isReviewMode) {
                     const isCorrect = (userAnswers[i] || "").toUpperCase() === (answerData[i] ? answerData[i].answer.toUpperCase() : "");
-                    dot.className = `question-dot ${isCorrect ? 'correct' : 'wrong'}`;
+                    dot.className = `question-dot ${isCorrect ? 'correct' : 'wrong'} ${belongsToPage ? 'current' : ''}`;
                 } else {
-                    dot.className = `question-dot ${userAnswers[i] ? 'answered' : 'unanswered'}`;
+                    dot.className = `question-dot ${userAnswers[i] ? 'answered' : 'unanswered'} ${belongsToPage ? 'current' : ''}`;
                 }
             }
         }
 
         function jumpToQuestion(num) {
-            if (!examData) return;
             let targetPage = -1;
             examData.sections.forEach((sec, idx) => {
                 const hasQ = sec.questions.some(q => (q.id === num || (q.ids && q.ids.includes(num))));
@@ -330,16 +335,16 @@
         }
 
         function confirmSubmit() {
-            if (confirm("Are you sure you want to finish the test?")) submitTest();
+            if (confirm("Are you sure you want to submit your work?")) submitTest();
         }
 
         function submitTest() {
             clearInterval(timerInterval);
             let correct = 0;
             for (let i=1; i<=40; i++) {
-                const uAns = (userAnswers[i] || "").toUpperCase();
-                const cAns = (answerData[i] ? answerData[i].answer.toUpperCase() : "");
-                if (uAns === cAns && cAns !== "") correct++;
+                const u = (userAnswers[i] || "").toUpperCase();
+                const c = (answerData[i] ? answerData[i].answer.toUpperCase() : "");
+                if (u === c && c !== "") correct++;
             }
             const band = (correct >= 39) ? 9.0 : (correct >= 37) ? 8.5 : (correct >= 35) ? 8.0 : (correct >= 33) ? 7.5 : (correct >= 30) ? 7.0 : (correct >= 27) ? 6.5 : (correct >= 23) ? 6.0 : (correct >= 19) ? 5.5 : (correct >= 15) ? 5.0 : (correct >= 13) ? 4.5 : (correct >= 10) ? 4.0 : 3.5;
             document.getElementById('score-display').innerText = band.toFixed(1);
@@ -354,7 +359,6 @@
             document.getElementById('exit-btn').classList.remove('hidden');
             currentPage = 0;
             renderPassage();
-            updateNav();
         }
 
         function gotoLoc(id) {
