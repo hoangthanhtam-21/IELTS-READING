@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Reading Simulation - Fixed Scoring</title>
+    <title>IELTS Reading Simulation - Final Scoring Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -19,8 +19,8 @@
         .question-dot.answered { background-color: #1d4ed8; color: white; }
         .question-dot.unanswered { border: 1px solid #d1d5db; color: #6b7280; }
         .question-dot.current { border: 2px solid #1d4ed8; background-color: #eff6ff; }
-        .question-dot.correct { background-color: #16a34a; color: white; }
-        .question-dot.wrong { background-color: #dc2626; color: white; }
+        .question-dot.correct { background-color: #16a34a !important; color: white !important; border: none !important; }
+        .question-dot.wrong { background-color: #dc2626 !important; color: white !important; border: none !important; }
         .cloze-input { border-bottom: 2px solid #3b82f6; border-top: none; border-left: none; border-right: none; background: transparent; outline: none; padding: 0 5px; font-weight: 600; text-align: center; min-width: 100px; }
         .instruction-box { background-color: #f8fafc; border-left: 4px solid #94a3b8; padding: 12px; margin-bottom: 20px; font-style: italic; color: #475569; font-size: 0.95rem; white-space: pre-wrap; }
         #hl-button { display: none; position: absolute; z-index: 100; background: #1d4ed8; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
@@ -75,7 +75,7 @@
 
     <div id="result-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div class="bg-white p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center border-4 border-blue-100">
-            <h2 class="text-2xl font-black mb-2">Test Result</h2>
+            <h2 class="text-2xl font-black mb-2 text-gray-800">Test Result</h2>
             <div class="text-7xl font-black text-blue-600 mb-4 tracking-tighter" id="score-display">0.0</div>
             <p class="text-lg font-bold text-gray-800 mb-8" id="raw-score-display">0/40 correct</p>
             <button onclick="reviewTest()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg">Review Answers</button>
@@ -141,6 +141,22 @@
             document.getElementById('hl-button').style.display = 'none';
         }
 
+        // Hàm so sánh đáp án thông minh
+        function isMatch(userVal, correctVal) {
+            if (!userVal || !correctVal) return false;
+            let u = userVal.toString().toUpperCase().trim();
+            let c = correctVal.toString().toUpperCase().trim();
+            
+            // 1. Khớp hoàn toàn
+            if (u === c) return true;
+            
+            // 2. Khớp chữ cái đầu (Ví dụ: "A" khớp với "A. SOME TEXT")
+            if (u.length === 1 && (c.startsWith(u + ".") || c.startsWith(u + " "))) return true;
+            if (c.length === 1 && (u.startsWith(c + ".") || u.startsWith(c + " "))) return true;
+            
+            return false;
+        }
+
         function renderPassage() {
             if (!examData) return;
             const sec = examData.sections[currentPage];
@@ -197,22 +213,9 @@
                 }
                 if (isReviewMode) {
                     const ids = q.ids || [q.id];
-                    const isMulti = q.ids && q.ids.length > 0;
-                    
                     ids.forEach(id => {
                         if (!answerData[id]) return;
-                        
-                        let ok = false;
-                        if (isMulti) {
-                            // Logic cho Multi-select: Kiểm tra xem đáp án người dùng có nằm trong bộ đáp án đúng của nhóm không
-                            const correctSet = q.ids.map(gid => answerData[gid].answer.toUpperCase().trim());
-                            const userAns = (userAnswers[id] || "").toUpperCase().trim();
-                            ok = userAns !== "" && correctSet.includes(userAns);
-                        } else {
-                            // Logic cho Single choice/Inline
-                            ok = (userAnswers[id] || "").toUpperCase().trim() === answerData[id].answer.toUpperCase().trim();
-                        }
-
+                        const ok = checkIndividualAnswer(id);
                         html += `<div class="mt-4 p-4 ${ok ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} rounded-xl text-sm border">
                             <div class="font-black mb-1">Question ${id}: ${ok ? '✓ Correct' : '✗ Incorrect'}</div>
                             <div><strong>Correct Answer:</strong> ${answerData[id].answer}</div>
@@ -258,7 +261,7 @@
             if (!examData) return;
             for (let i=1; i<=40; i++) {
                 const d = document.getElementById(`dot-${i}`); if (!d) continue;
-                d.classList.remove('current');
+                d.classList.remove('current', 'answered', 'unanswered', 'correct', 'wrong');
                 
                 if (examData.sections[currentPage]) {
                     const has = examData.sections[currentPage].questions.some(q => (q.id === i || (q.ids && q.ids.includes(i))));
@@ -267,20 +270,19 @@
                 
                 if (isReviewMode) {
                     const ok = checkIndividualAnswer(i);
-                    d.className = `question-dot ${ok ? 'correct' : 'wrong'} ${d.classList.contains('current') ? 'current' : ''}`;
+                    d.classList.add(ok ? 'correct' : 'wrong');
                 } else {
-                    d.className = `question-dot ${userAnswers[i] ? 'answered' : 'unanswered'} ${d.classList.contains('current') ? 'current' : ''}`;
+                    d.classList.add(userAnswers[i] ? 'answered' : 'unanswered');
                 }
             }
         }
 
-        // Hàm bổ trợ kiểm tra đáp án đơn lẻ
         function checkIndividualAnswer(id) {
             if (!answerData || !answerData[id]) return false;
-            const u = (userAnswers[id] || "").toUpperCase().trim();
-            const c = answerData[id].answer.toUpperCase().trim();
+            const u = (userAnswers[id] || "");
+            const c = answerData[id].answer;
             
-            // Tìm xem câu này có thuộc nhóm Multi-select không
+            // Kiểm tra xem câu này có nằm trong nhóm chọn nhiều không
             let multiGroup = null;
             examData.sections.forEach(sec => {
                 sec.questions.forEach(q => {
@@ -289,11 +291,12 @@
             });
 
             if (multiGroup) {
-                const correctSet = multiGroup.map(gid => answerData[gid].answer.toUpperCase().trim());
-                return u !== "" && correctSet.includes(u);
+                // Với Multi-select: kiểm tra xem đáp án có nằm trong tập hợp đáp án đúng của nhóm không
+                const correctSet = multiGroup.map(gid => answerData[gid].answer);
+                return u !== "" && correctSet.some(cVal => isMatch(u, cVal));
             }
             
-            return u === c && c !== "";
+            return isMatch(u, c);
         }
 
         function jumpToQuestion(num) {
@@ -309,17 +312,17 @@
             let finalScore = 0;
             const scoredIds = new Set();
 
-            // 1. Chấm điểm theo nhóm (Multi-select)
+            // 1. Chấm điểm theo nhóm (Multi-select) cho 11-13
             examData.sections.forEach(sec => {
                 sec.questions.forEach(q => {
-                    if (q.ids) {
-                        const correctAnswers = q.ids.map(id => answerData[id].answer.toUpperCase().trim());
-                        const studentAnswers = q.ids.map(id => (userAnswers[id] || "").toUpperCase().trim()).filter(a => a !== "");
+                    if (q.type === 'multi' && q.ids) {
+                        const correctAnswers = q.ids.map(id => answerData[id].answer);
+                        const studentAnswers = q.ids.map(id => (userAnswers[id] || "")).filter(a => a !== "");
                         
                         let groupCorrect = 0;
                         const tempCorrect = [...correctAnswers];
                         studentAnswers.forEach(ans => {
-                            const idx = tempCorrect.indexOf(ans);
+                            const idx = tempCorrect.findIndex(cAns => isMatch(ans, cAns));
                             if (idx !== -1) {
                                 groupCorrect++;
                                 tempCorrect.splice(idx, 1);
@@ -331,7 +334,7 @@
                 });
             });
 
-            // 2. Chấm điểm các câu còn lại
+            // 2. Chấm điểm các câu còn lại (MC, Inline, Cloze)
             for (let i = 1; i <= 40; i++) {
                 if (scoredIds.has(i)) continue;
                 if (checkIndividualAnswer(i)) finalScore++;
