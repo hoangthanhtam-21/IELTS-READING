@@ -3,150 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Reading Simulation - Highlighter Edition</title>
+    <title>IELTS Reading Simulation - Fixed Scoring</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; user-select: none; }
-        
         .split-container { height: calc(100vh - 160px); }
-        
         .scroll-custom::-webkit-scrollbar { width: 6px; }
         .scroll-custom::-webkit-scrollbar-track { background: #f1f1f1; }
         .scroll-custom::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
-        
-        /* Hệ thống Highlight của bài thi (Review) */
-        .highlight-location { 
-            background-color: #fef08a; 
-            font-weight: 600; 
-            padding: 0 4px; 
-            border-radius: 4px; 
-            box-shadow: 0 0 0 2px #fef08a; 
-        }
-
-        /* Highlight của thí sinh */
-        .user-highlight {
-            background-color: #bbf7d0; /* Xanh lá nhạt cho HS dễ nhìn */
-            cursor: pointer;
-            border-radius: 2px;
-        }
-        .user-highlight:hover {
-            background-color: #86efac;
-            text-decoration: line-through;
-            text-decoration-color: rgba(220, 38, 38, 0.5);
-        }
-
+        .highlight-location { background-color: #fef08a; font-weight: 600; padding: 0 4px; border-radius: 4px; box-shadow: 0 0 0 2px #fef08a; }
+        .user-highlight { background-color: #bbf7d0; cursor: pointer; border-radius: 2px; }
+        .user-highlight:hover { background-color: #86efac; }
         .question-dot { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; font-size: 11px; font-weight: 600; flex-shrink: 0; }
         .question-dot.answered { background-color: #1d4ed8; color: white; }
         .question-dot.unanswered { border: 1px solid #d1d5db; color: #6b7280; }
         .question-dot.current { border: 2px solid #1d4ed8; background-color: #eff6ff; }
         .question-dot.correct { background-color: #16a34a; color: white; }
         .question-dot.wrong { background-color: #dc2626; color: white; }
-        
         .cloze-input { border-bottom: 2px solid #3b82f6; border-top: none; border-left: none; border-right: none; background: transparent; outline: none; padding: 0 5px; font-weight: 600; text-align: center; min-width: 100px; }
-        .cloze-input:focus { border-bottom-color: #1d4ed8; background: #eff6ff; }
-        
-        .instruction-box { 
-            background-color: #f8fafc; 
-            border-left: 4px solid #94a3b8; 
-            padding: 12px; 
-            margin-bottom: 20px; 
-            font-style: italic; 
-            color: #475569; 
-            font-size: 0.95rem; 
-            white-space: pre-wrap; 
-        }
-
-        #hl-button {
-            display: none;
-            position: absolute;
-            z-index: 100;
-            background: #1d4ed8;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            cursor: pointer;
-        }
-        #hl-button:hover { background: #1e40af; }
-
-        /* Đảm bảo bài đọc có thể chọn văn bản */
+        .instruction-box { background-color: #f8fafc; border-left: 4px solid #94a3b8; padding: 12px; margin-bottom: 20px; font-style: italic; color: #475569; font-size: 0.95rem; white-space: pre-wrap; }
+        #hl-button { display: none; position: absolute; z-index: 100; background: #1d4ed8; color: white; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; }
         #passage-content { user-select: text; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 overflow-hidden">
-
-    <!-- Floating Highlight Button -->
     <div id="hl-button" onclick="applyHighlight()">Highlight</div>
 
-    <!-- Login -->
     <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-white">
         <div class="max-w-md w-full p-10 border rounded-2xl shadow-xl">
             <h1 class="text-3xl font-black mb-2 text-blue-800 tracking-tighter uppercase">IELTS Reading</h1>
             <p class="text-gray-500 mb-8 font-medium">Computer-delivered Simulation</p>
-            <input type="text" id="user-name" placeholder="Enter your full name" class="w-full p-4 border-2 rounded-xl mb-4 focus:border-blue-500 outline-none transition">
-            <button onclick="startTest()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg">Start Examination</button>
-            <div class="mt-6 flex justify-between text-xs text-gray-400 font-bold uppercase tracking-widest">
-                <span>60 Minutes</span>
-                <span>40 Questions</span>
-            </div>
+            <input type="text" id="user-name" placeholder="Enter your full name" class="w-full p-4 border-2 rounded-xl mb-4 outline-none">
+            <button onclick="startTest()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700">Start Examination</button>
         </div>
     </div>
 
-    <!-- Header -->
     <header class="bg-white border-b px-8 py-4 flex justify-between items-center shadow-sm relative z-10">
         <div class="flex items-center gap-6">
-            <div class="text-blue-700 font-black text-xl tracking-tighter">IELTS<span class="text-gray-400 font-light ml-1">SIM</span></div>
+            <div class="text-blue-700 font-black text-xl">IELTS<span class="text-gray-400 font-light ml-1">SIM</span></div>
             <div id="display-name" class="text-sm font-bold text-gray-600 border-l pl-6 uppercase tracking-wider">---</div>
         </div>
-        
-        <div id="timer" class="text-2xl font-mono font-black text-red-600 bg-red-50 px-6 py-2 rounded-xl border-2 border-red-100 animate-pulse">60:00</div>
-
+        <div id="timer" class="text-2xl font-mono font-black text-red-600 bg-red-50 px-6 py-2 rounded-xl border-2 border-red-100">60:00</div>
         <div class="flex gap-3">
-            <button id="submit-btn" onclick="confirmSubmit()" class="bg-green-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-green-700 transition shadow-md">Finish Test</button>
-            <button id="exit-btn" onclick="location.reload()" class="hidden bg-gray-200 text-gray-700 px-8 py-2.5 rounded-lg font-bold hover:bg-gray-300 transition">Exit Review</button>
+            <button id="submit-btn" onclick="confirmSubmit()" class="bg-green-600 text-white px-8 py-2.5 rounded-lg font-bold shadow-md hover:bg-green-700">Finish Test</button>
+            <button id="exit-btn" onclick="location.reload()" class="hidden bg-gray-200 text-gray-700 px-8 py-2.5 rounded-lg font-bold hover:bg-gray-300">Exit Review</button>
         </div>
     </header>
 
-    <!-- Main -->
     <main class="flex split-container">
         <div id="passage-side" class="w-1/2 p-10 overflow-y-auto border-r bg-white scroll-custom">
             <div id="passage-content" class="prose max-w-none font-serif text-lg leading-relaxed text-gray-800" onmouseup="handleSelection(event)">
                 <div class="flex items-center justify-center h-full text-gray-400 italic">Loading...</div>
             </div>
         </div>
-
         <div id="question-side" class="w-1/2 p-10 overflow-y-auto bg-gray-50 scroll-custom">
             <div class="mb-6 flex justify-between items-center bg-blue-50 p-4 rounded-xl border border-blue-100">
                 <span id="passage-label" class="font-bold text-blue-800 uppercase tracking-widest text-sm">Passage 1 of 3</span>
                 <div class="flex gap-2">
-                    <button id="prev-page" onclick="changePage(-1)" class="p-2 bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-30">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                    </button>
-                    <button id="next-page" onclick="changePage(1)" class="p-2 bg-white border rounded-lg hover:bg-gray-50 disabled:opacity-30">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </button>
+                    <button id="prev-page" onclick="changePage(-1)" class="p-2 bg-white border rounded-lg disabled:opacity-30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                    <button id="next-page" onclick="changePage(1)" class="p-2 bg-white border rounded-lg disabled:opacity-30"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
                 </div>
             </div>
             <div id="questions-list" class="space-y-10"></div>
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="fixed bottom-0 left-0 right-0 h-24 bg-white border-t px-8 py-3 flex items-center gap-4 overflow-x-auto">
         <div id="nav-dots" class="flex gap-2.5 mx-auto"></div>
     </footer>
 
-    <!-- Result -->
     <div id="result-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div class="bg-white p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center border-4 border-blue-100">
             <h2 class="text-2xl font-black mb-2">Test Result</h2>
-            <p class="text-gray-500 mb-8 font-medium text-sm uppercase">Reading Band Score</p>
             <div class="text-7xl font-black text-blue-600 mb-4 tracking-tighter" id="score-display">0.0</div>
             <p class="text-lg font-bold text-gray-800 mb-8" id="raw-score-display">0/40 correct</p>
-            <button onclick="reviewTest()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition">Review Answers</button>
+            <button onclick="reviewTest()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg">Review Answers</button>
         </div>
     </div>
 
@@ -156,17 +88,15 @@
 
         async function loadData() {
             try {
-                // Fetching data
-                const eRes = await fetch('exam.json');
-                const aRes = await fetch('answers.json');
-                if (!eRes.ok || !aRes.ok) throw new Error("Data files not found.");
+                const [eRes, aRes] = await Promise.all([fetch('exam.json'), fetch('answers.json')]);
+                if (!eRes.ok || !aRes.ok) throw new Error("Files missing");
                 examData = await eRes.json();
                 answerData = await aRes.json();
                 renderPassage();
                 renderNav();
             } catch(e) {
                 console.error(e);
-                document.getElementById('passage-content').innerHTML = `<p class="text-red-500">Error loading exam files.</p>`;
+                alert("Ensure index.html, exam.json, and answers.json are in the same folder.");
             }
         }
 
@@ -188,252 +118,248 @@
             }, 1000);
         }
 
-        // --- HIGHLIGHTER LOGIC ---
         function handleSelection(e) {
             if (isReviewMode) return;
-            const selection = window.getSelection();
+            const s = window.getSelection();
             const btn = document.getElementById('hl-button');
-            
-            if (selection.rangeCount > 0 && selection.toString().trim().length > 0) {
-                selectedRange = selection.getRangeAt(0).cloneRange();
-                const rect = selection.getRangeAt(0).getBoundingClientRect();
-                btn.style.top = `${rect.top + window.scrollY - 30}px`;
-                btn.style.left = `${rect.left + window.scrollX}px`;
+            if (s.rangeCount > 0 && s.toString().trim().length > 0) {
+                selectedRange = s.getRangeAt(0).cloneRange();
+                const r = s.getRangeAt(0).getBoundingClientRect();
+                btn.style.top = `${r.top + window.scrollY - 30}px`;
+                btn.style.left = `${r.left + window.scrollX}px`;
                 btn.style.display = 'block';
-            } else {
-                btn.style.display = 'none';
-            }
+            } else { btn.style.display = 'none'; }
         }
 
         function applyHighlight() {
             if (!selectedRange) return;
             const span = document.createElement('span');
             span.className = 'user-highlight';
-            span.title = "Click to remove highlight";
             span.onclick = function() { this.replaceWith(...this.childNodes); };
-            
-            try {
-                selectedRange.surroundContents(span);
-            } catch(e) {
-                // If selection spans multiple nodes, we use a simpler approach
-                const mark = document.createElement('mark');
-                mark.className = 'user-highlight';
-                mark.style.backgroundColor = '#bbf7d0';
-                mark.onclick = function() { this.replaceWith(...this.childNodes); };
-                selectedRange.surroundContents(mark);
-            }
-            
+            try { selectedRange.surroundContents(span); } catch(e) {}
             window.getSelection().removeAllRanges();
             document.getElementById('hl-button').style.display = 'none';
         }
 
-        // --- RENDER LOGIC ---
         function renderPassage() {
             if (!examData) return;
-            const section = examData.sections[currentPage];
+            const sec = examData.sections[currentPage];
             document.getElementById('passage-label').innerText = `Passage ${currentPage + 1} of 3`;
             document.getElementById('passage-content').innerHTML = `
-                <h1 class="text-3xl font-black mb-6 italic text-gray-900 border-b-4 border-blue-600 inline-block pb-1 uppercase">${section.title}</h1>
-                <div class="passage-text leading-loose space-y-6">${section.content}</div>
+                <h1 class="text-3xl font-black mb-6 italic text-gray-900 border-b-4 border-blue-600 inline-block pb-1 uppercase">${sec.title}</h1>
+                <div class="passage-text leading-loose space-y-6">${sec.content}</div>
             `;
-            
             const qList = document.getElementById('questions-list');
             qList.innerHTML = '';
-            
-            section.questions.forEach(q => {
+            sec.questions.forEach(q => {
                 if (q.instruction) {
-                    const inst = document.createElement('div');
-                    inst.className = 'instruction-box';
-                    inst.innerHTML = `<strong>Instructions:</strong><br>${q.instruction}`;
-                    qList.appendChild(inst);
+                    const i = document.createElement('div');
+                    i.className = 'instruction-box';
+                    i.innerHTML = `<strong>Instructions:</strong><br>${q.instruction}`;
+                    qList.appendChild(i);
                 }
-
                 const card = document.createElement('div');
-                card.className = `p-8 bg-white border-2 rounded-2xl shadow-sm transition-all`;
-                card.id = `card-${q.id || (q.ids && q.ids[0])}`;
-                
+                card.className = `p-8 bg-white border-2 rounded-2xl shadow-sm`;
+                card.id = `card-${q.id || q.ids?.[0]}`;
                 let html = '';
                 if (q.type === 'mc') {
-                    html = `
-                        <div class="flex gap-4">
-                            <span class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold flex-shrink-0">${q.id}</span>
-                            <div class="w-full">
-                                <p class="font-bold text-lg mb-4">${q.text}</p>
-                                <div class="grid gap-2">
-                                    ${q.options.map(opt => `
-                                        <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition">
-                                            <input type="radio" name="q${q.id}" value="${opt}" ${userAnswers[q.id] === opt ? 'checked' : ''} onchange="saveAns(${q.id}, '${opt}')" class="w-5 h-5">
-                                            <span class="ml-4 font-medium">${opt}</span>
-                                        </label>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                    html = `<div class="flex gap-4"><span class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold flex-shrink-0">${q.id}</span><div class="w-full"><p class="font-bold text-lg mb-4">${q.text}</p><div class="grid gap-2">
+                        ${q.options.map(opt => {
+                            const letter = opt.trim().charAt(0).toUpperCase();
+                            return `<label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition">
+                                <input type="radio" name="q${q.id}" value="${letter}" ${userAnswers[q.id] === letter ? 'checked' : ''} onchange="saveAns(${q.id}, this.value)" class="w-5 h-5">
+                                <span class="ml-4 font-medium">${opt}</span>
+                            </label>`;
+                        }).join('')}
+                    </div></div></div>`;
                 } else if (q.type === 'cloze') {
-                    let clozeText = q.text;
+                    let txt = q.text;
                     q.ids.forEach(id => {
-                        const val = userAnswers[id] || '';
-                        clozeText = clozeText.replace(`{${id}}`, `<input type="text" class="cloze-input" value="${val}" oninput="saveAns(${id}, this.value)" placeholder="...">`);
+                        txt = txt.replace(`{${id}}`, `<input type="text" class="cloze-input" value="${userAnswers[id] || ''}" oninput="saveAns(${id}, this.value)" placeholder="...">`);
                     });
-                    html = `<div class="p-2 leading-loose font-medium text-gray-700">${clozeText}</div>`;
+                    html = `<div class="p-2 leading-loose font-medium text-gray-700">${txt}</div>`;
                 } else if (q.type === 'multi') {
-                    html = `
-                        <div class="w-full">
-                            <p class="font-bold text-lg mb-4">${q.text}</p>
-                            <div class="grid gap-2">
-                                ${q.options.map(opt => `
-                                    <label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition">
-                                        <input type="checkbox" onchange="saveMulti(${JSON.stringify(q.ids)}, '${opt}')" ${isMultiChecked(q.ids, opt) ? 'checked' : ''} class="w-5 h-5 rounded">
-                                        <span class="ml-4 font-medium">${opt}</span>
-                                    </label>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
+                    html = `<div class="w-full"><p class="font-bold text-lg mb-4">${q.text}</p><div class="grid gap-2">
+                        ${q.options.map(opt => {
+                            const letter = opt.trim().charAt(0).toUpperCase();
+                            return `<label class="flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition">
+                                <input type="checkbox" value="${letter}" onchange="saveMulti(${JSON.stringify(q.ids)}, this.value)" ${isMultiChecked(q.ids, letter) ? 'checked' : ''} class="w-5 h-5 rounded">
+                                <span class="ml-4 font-medium">${opt}</span>
+                            </label>`;
+                        }).join('')}
+                    </div></div>`;
                 } else if (q.type === 'inline') {
-                    html = `
-                        <div class="flex items-center gap-4 py-3 border-b">
-                            <span class="w-7 h-7 rounded bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">${q.id}</span>
-                            <p class="flex-grow font-medium">${q.text}</p>
-                            <input type="text" value="${userAnswers[q.id] || ''}" oninput="saveAns(${q.id}, this.value)" class="p-2 border-2 rounded-lg w-36 font-bold uppercase focus:border-blue-500 outline-none text-center">
-                        </div>
-                    `;
+                    html = `<div class="flex items-center gap-4 py-3 border-b">
+                        <span class="w-7 h-7 rounded bg-gray-200 text-gray-700 flex items-center justify-center font-bold text-xs">${q.id}</span>
+                        <p class="flex-grow font-medium">${q.text}</p>
+                        <input type="text" value="${userAnswers[q.id] || ''}" oninput="saveAns(${q.id}, this.value)" class="p-2 border-2 rounded-lg w-36 font-bold uppercase focus:border-blue-500 outline-none text-center">
+                    </div>`;
                 }
-                
                 if (isReviewMode) {
                     const ids = q.ids || [q.id];
-                    let reviewHtml = '';
+                    const isMulti = q.ids && q.ids.length > 0;
+                    
                     ids.forEach(id => {
                         if (!answerData[id]) return;
-                        const correct = answerData[id].answer.toUpperCase();
-                        const user = (userAnswers[id] || "").toUpperCase();
-                        const isCorrect = user === correct;
-                        reviewHtml += `
-                            <div class="mt-4 p-4 ${isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} rounded-xl text-sm border">
-                                <div class="font-black mb-1">Question ${id}: ${isCorrect ? '✓ Correct' : '✗ Incorrect'}</div>
-                                <div><strong>Answer:</strong> ${correct}</div>
-                                <div class="mt-1 text-xs opacity-80">Reason: ${answerData[id].explanation}</div>
-                                <button onclick="gotoLoc('${answerData[id].locationId}')" class="mt-2 font-bold text-blue-600 underline">Find in passage</button>
-                            </div>
-                        `;
-                    });
-                    html += reviewHtml;
-                }
+                        
+                        let ok = false;
+                        if (isMulti) {
+                            // Logic cho Multi-select: Kiểm tra xem đáp án người dùng có nằm trong bộ đáp án đúng của nhóm không
+                            const correctSet = q.ids.map(gid => answerData[gid].answer.toUpperCase().trim());
+                            const userAns = (userAnswers[id] || "").toUpperCase().trim();
+                            ok = userAns !== "" && correctSet.includes(userAns);
+                        } else {
+                            // Logic cho Single choice/Inline
+                            ok = (userAnswers[id] || "").toUpperCase().trim() === answerData[id].answer.toUpperCase().trim();
+                        }
 
+                        html += `<div class="mt-4 p-4 ${ok ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'} rounded-xl text-sm border">
+                            <div class="font-black mb-1">Question ${id}: ${ok ? '✓ Correct' : '✗ Incorrect'}</div>
+                            <div><strong>Correct Answer:</strong> ${answerData[id].answer}</div>
+                            <div class="mt-1 text-xs opacity-80 italic">Reason: ${answerData[id].explanation}</div>
+                            <button onclick="gotoLoc('${answerData[id].locationId}')" class="mt-2 font-bold text-blue-600 underline">Find in passage</button>
+                        </div>`;
+                    });
+                }
                 card.innerHTML = html;
                 qList.appendChild(card);
             });
             updateNav();
         }
 
-        function saveAns(id, val) {
-            if (isReviewMode) return;
-            userAnswers[id] = val.trim();
-            updateNav();
-        }
-
+        function saveAns(id, val) { if (!isReviewMode) { userAnswers[id] = val.trim(); updateNav(); } }
+        
         function saveMulti(ids, val) {
             if (isReviewMode) return;
             if (isMultiChecked(ids, val)) {
                 const idToRemove = ids.find(id => userAnswers[id] === val);
                 delete userAnswers[idToRemove];
             } else {
-                const firstEmptyId = ids.find(id => !userAnswers[id]);
-                if (firstEmptyId) userAnswers[firstEmptyId] = val;
+                const nextId = ids.find(id => !userAnswers[id]);
+                if (nextId) userAnswers[nextId] = val;
             }
-            updateNav();
-            renderPassage();
+            updateNav(); renderPassage();
         }
-
-        function isMultiChecked(ids, val) {
-            return ids.some(id => userAnswers[id] === val);
-        }
-
-        function changePage(dir) {
-            currentPage += dir;
-            renderPassage();
-        }
-
+        
+        function isMultiChecked(ids, val) { return ids.some(id => userAnswers[id] === val); }
+        
+        function changePage(dir) { currentPage += dir; renderPassage(); }
+        
         function renderNav() {
-            const nav = document.getElementById('nav-dots');
-            nav.innerHTML = '';
+            const n = document.getElementById('nav-dots'); n.innerHTML = '';
             for (let i=1; i<=40; i++) {
-                const dot = document.createElement('div');
-                dot.id = `dot-${i}`;
-                dot.className = 'question-dot unanswered';
-                dot.innerText = i;
-                dot.onclick = () => jumpToQuestion(i);
-                nav.appendChild(dot);
+                const d = document.createElement('div'); d.id = `dot-${i}`; d.className = 'question-dot unanswered'; d.innerText = i;
+                d.onclick = () => jumpToQuestion(i); n.appendChild(d);
             }
             updateNav();
         }
-
+        
         function updateNav() {
+            if (!examData) return;
             for (let i=1; i<=40; i++) {
-                const dot = document.getElementById(`dot-${i}`);
-                if (!dot) continue;
-                dot.classList.remove('current');
-                if (examData && examData.sections[currentPage]) {
-                    const belongs = examData.sections[currentPage].questions.some(q => (q.id === i || (q.ids && q.ids.includes(i))));
-                    if (belongs) dot.classList.add('current');
+                const d = document.getElementById(`dot-${i}`); if (!d) continue;
+                d.classList.remove('current');
+                
+                if (examData.sections[currentPage]) {
+                    const has = examData.sections[currentPage].questions.some(q => (q.id === i || (q.ids && q.ids.includes(i))));
+                    if (has) d.classList.add('current');
                 }
+                
                 if (isReviewMode) {
-                    const ok = (userAnswers[i] || "").toUpperCase() === (answerData[i] ? answerData[i].answer.toUpperCase() : "");
-                    dot.className = `question-dot ${ok ? 'correct' : 'wrong'} ${dot.classList.contains('current') ? 'current' : ''}`;
+                    const ok = checkIndividualAnswer(i);
+                    d.className = `question-dot ${ok ? 'correct' : 'wrong'} ${d.classList.contains('current') ? 'current' : ''}`;
                 } else {
-                    dot.className = `question-dot ${userAnswers[i] ? 'answered' : 'unanswered'} ${dot.classList.contains('current') ? 'current' : ''}`;
+                    d.className = `question-dot ${userAnswers[i] ? 'answered' : 'unanswered'} ${d.classList.contains('current') ? 'current' : ''}`;
                 }
             }
+        }
+
+        // Hàm bổ trợ kiểm tra đáp án đơn lẻ
+        function checkIndividualAnswer(id) {
+            if (!answerData || !answerData[id]) return false;
+            const u = (userAnswers[id] || "").toUpperCase().trim();
+            const c = answerData[id].answer.toUpperCase().trim();
+            
+            // Tìm xem câu này có thuộc nhóm Multi-select không
+            let multiGroup = null;
+            examData.sections.forEach(sec => {
+                sec.questions.forEach(q => {
+                    if (q.ids && q.ids.includes(id)) multiGroup = q.ids;
+                });
+            });
+
+            if (multiGroup) {
+                const correctSet = multiGroup.map(gid => answerData[gid].answer.toUpperCase().trim());
+                return u !== "" && correctSet.includes(u);
+            }
+            
+            return u === c && c !== "";
         }
 
         function jumpToQuestion(num) {
-            let target = -1;
-            examData.sections.forEach((sec, idx) => {
-                if (sec.questions.some(q => (q.id === num || (q.ids && q.ids.includes(num))))) target = idx;
-            });
-            if (target !== -1 && target !== currentPage) {
-                currentPage = target;
-                renderPassage();
-            }
-            setTimeout(() => {
-                const el = document.getElementById(`card-${num}`);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
+            let t = -1; examData.sections.forEach((s, idx) => { if (s.questions.some(q => (q.id === num || (q.ids && q.ids.includes(num))))) t = idx; });
+            if (t !== -1 && t !== currentPage) { currentPage = t; renderPassage(); }
+            setTimeout(() => { const el = document.getElementById(`card-${num}`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
         }
-
-        function confirmSubmit() {
-            if (confirm("Submit your work?")) submitTest();
-        }
-
+        
+        function confirmSubmit() { if (confirm("Do you want to submit your test?")) submitTest(); }
+        
         function submitTest() {
             clearInterval(timerInterval);
-            let correct = 0;
-            for (let i=1; i<=40; i++) {
-                if ((userAnswers[i] || "").toUpperCase() === (answerData[i] ? answerData[i].answer.toUpperCase() : "")) correct++;
+            let finalScore = 0;
+            const scoredIds = new Set();
+
+            // 1. Chấm điểm theo nhóm (Multi-select)
+            examData.sections.forEach(sec => {
+                sec.questions.forEach(q => {
+                    if (q.ids) {
+                        const correctAnswers = q.ids.map(id => answerData[id].answer.toUpperCase().trim());
+                        const studentAnswers = q.ids.map(id => (userAnswers[id] || "").toUpperCase().trim()).filter(a => a !== "");
+                        
+                        let groupCorrect = 0;
+                        const tempCorrect = [...correctAnswers];
+                        studentAnswers.forEach(ans => {
+                            const idx = tempCorrect.indexOf(ans);
+                            if (idx !== -1) {
+                                groupCorrect++;
+                                tempCorrect.splice(idx, 1);
+                            }
+                        });
+                        finalScore += groupCorrect;
+                        q.ids.forEach(id => scoredIds.add(id));
+                    }
+                });
+            });
+
+            // 2. Chấm điểm các câu còn lại
+            for (let i = 1; i <= 40; i++) {
+                if (scoredIds.has(i)) continue;
+                if (checkIndividualAnswer(i)) finalScore++;
             }
-            const band = (correct >= 39) ? 9.0 : (correct >= 37) ? 8.5 : (correct >= 35) ? 8.0 : (correct >= 33) ? 7.5 : (correct >= 30) ? 7.0 : (correct >= 27) ? 6.5 : (correct >= 23) ? 6.0 : (correct >= 19) ? 5.5 : (correct >= 15) ? 5.0 : (correct >= 13) ? 4.5 : (correct >= 10) ? 4.0 : 3.5;
-            document.getElementById('score-display').innerText = band.toFixed(1);
-            document.getElementById('raw-score-display').innerText = `${correct}/40 correct`;
+
+            const b = (finalScore >= 39) ? 9.0 : (finalScore >= 37) ? 8.5 : (finalScore >= 35) ? 8.0 : (finalScore >= 33) ? 7.5 : (finalScore >= 30) ? 7.0 : (finalScore >= 27) ? 6.5 : (finalScore >= 23) ? 6.0 : (finalScore >= 19) ? 5.5 : (finalScore >= 15) ? 5.0 : (finalScore >= 13) ? 4.5 : (finalScore >= 10) ? 4.0 : 3.5;
+            
+            document.getElementById('score-display').innerText = b.toFixed(1);
+            document.getElementById('raw-score-display').innerText = `${finalScore}/40 correct`;
             document.getElementById('result-modal').classList.remove('hidden');
         }
 
-        function reviewTest() {
-            isReviewMode = true;
-            document.getElementById('result-modal').classList.add('hidden');
-            document.getElementById('submit-btn').classList.add('hidden');
-            document.getElementById('exit-btn').classList.remove('hidden');
-            currentPage = 0;
-            renderPassage();
+        function reviewTest() { 
+            isReviewMode = true; 
+            document.getElementById('result-modal').classList.add('hidden'); 
+            document.getElementById('submit-btn').classList.add('hidden'); 
+            document.getElementById('exit-btn').classList.remove('hidden'); 
+            currentPage = 0; 
+            renderPassage(); 
         }
 
-        function gotoLoc(id) {
-            document.querySelectorAll('.highlight-location').forEach(el => el.classList.remove('highlight-location'));
-            const target = document.getElementById(id);
-            if (target) {
-                target.classList.add('highlight-location');
-                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+        function gotoLoc(id) { 
+            document.querySelectorAll('.highlight-location').forEach(el => el.classList.remove('highlight-location')); 
+            const t = document.getElementById(id); 
+            if (t) { 
+                t.classList.add('highlight-location'); 
+                t.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+            } 
         }
     </script>
 </body>
