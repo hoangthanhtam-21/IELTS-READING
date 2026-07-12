@@ -88,7 +88,7 @@
 
         async function loadData() {
             try {
-                const [eRes, aRes] = await Promise.all([fetch('exam.json'), fetch('answers.json')]);
+                const [eRes, aRes] = await Promise.all([fetch('/exam.json'), fetch('/answers.json')]);
                 if (!eRes.ok || !aRes.ok) throw new Error("Files missing");
                 examData = await eRes.json();
                 answerData = await aRes.json();
