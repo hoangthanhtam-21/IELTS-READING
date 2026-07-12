@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Reading Simulation - Final Scoring Fix</title>
+    <title>IELTS Reading Simulation - Diagnostic Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -87,16 +87,31 @@
         let selectedRange = null;
 
         async function loadData() {
+            // Tự động định vị đường dẫn thư mục hiện tại để không bị lệch đường dẫn trên GitHub Pages
+            const baseHref = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const examUrl = baseHref + 'exam.json';
+            const answersUrl = baseHref + 'answers.json';
+
             try {
-                const [eRes, aRes] = await Promise.all([fetch('/exam.json'), fetch('/answers.json')]);
-                if (!eRes.ok || !aRes.ok) throw new Error("Files missing");
+                const [eRes, aRes] = await Promise.all([
+                    fetch(examUrl).catch(err => { throw new Error(`Could not fetch exam.json from ${examUrl}`) }),
+                    fetch(answersUrl).catch(err => { throw new Error(`Could not fetch answers.json from ${answersUrl}`) })
+                ]);
+                
+                if (!eRes.ok) {
+                    throw new Error(`File exam.json failed to load.\nURL: ${examUrl}\nStatus: ${eRes.status} (${eRes.statusText})`);
+                }
+                if (!aRes.ok) {
+                    throw new Error(`File answers.json failed to load.\nURL: ${answersUrl}\nStatus: ${aRes.status} (${aRes.statusText})`);
+                }
+
                 examData = await eRes.json();
                 answerData = await aRes.json();
                 renderPassage();
                 renderNav();
             } catch(e) {
                 console.error(e);
-                alert("Ensure index.html, exam.json, and answers.json are in the same folder.");
+                alert(`[DIAGNOSTIC ERROR]\n\n${e.message}\n\nPlease check if your files on GitHub have the correct spelling, are in lowercase, and are placed in the correct repository root.`);
             }
         }
 
