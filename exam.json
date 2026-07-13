@@ -24,7 +24,7 @@
           ]
         },
         {
-          "instruction": "<strong>Questions 6-10</strong><br>Match each characteristic with the correct period, A, B or C. (A. The agricultural age, B. The industrial age, C. The neo-industrial age).",
+          "instruction": "<strong>Questions 6-10</strong><br>Look at the following characteristics (Questions 6-10) and the list of periods below.<br>Match each characteristic with the correct period, A, B or C.<br><br><strong>List of periods</strong><br><strong>A</strong> The agricultural age<br><strong>B</strong> The industrial age<br><strong>C</strong> The neo-industrial age",
           "items": [
             {"id": 6, "type": "fill", "text": "a surplus of goods. ___"},
             {"id": 7, "type": "fill", "text": "an emphasis on production quantity. ___"},
@@ -35,10 +35,11 @@
         },
         {
           "instruction": "<strong>Questions 11-13</strong><br>Complete the summary below. Choose ONE WORD ONLY from the passage for each answer.",
+          "html_content": "<div style='line-height: 2; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 5px;'><h4 style='text-align:center; margin-top:0;'>Businesses in the 21st century</h4><p>It is generally agreed that changes are taking place more quickly now, and that organisations are being transformed. One leading economist suggested that by 2020, up to a quarter of employees would be [INPUT:11] and half of all employees would be based in the [INPUT:12] . Although predictions can be wrong, the speed of change is not in doubt, and business leaders need to understand the [INPUT:13] that will be influential.</p></div>",
           "items": [
-            {"id": 11, "type": "fill", "text": "It is generally agreed that changes are taking place more quickly now. One leading economist suggested that by 2020, up to a quarter of employees would be ___"},
-            {"id": 12, "type": "fill", "text": "and half of all employees would be based in the ___ ."},
-            {"id": 13, "type": "fill", "text": "Although predictions can be wrong, the speed of change is not in doubt, and business leaders need to understand the ___ that will be influential."}
+            {"id": 11, "type": "inline"},
+            {"id": 12, "type": "inline"},
+            {"id": 13, "type": "inline"}
           ]
         }
       ]
@@ -58,25 +59,27 @@
       ],
       "questions": [
         {
-          "instruction": "<strong>Questions 14-18</strong><br>Complete the notes below. Choose ONE WORD ONLY from the passage.",
+          "instruction": "<strong>Questions 14-18</strong><br>Complete the notes below. Choose ONE WORD ONLY from the passage for each answer.",
+          "html_content": "<div style='line-height: 2.2; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 5px;'><h4 style='text-align: center; margin-top: 0;'>The importance of the huarango tree</h4><ul style='list-style-type: none; padding-left: 0; margin-bottom: 0;'><li>– its roots can extend as far as 80 metres into the soil</li><li>– can access [INPUT:14] deep below the surface</li><li>– was a crucial part of local inhabitants’ [INPUT:15] a long time ago</li><li>– helped people to survive periods of [INPUT:16]</li><li>– prevents [INPUT:17] of the soil</li><li>– prevents land from becoming a [INPUT:18]</li></ul></div>",
           "items": [
-            {"id": 14, "type": "fill", "text": "– can access ___ deep below the surface"},
-            {"id": 15, "type": "fill", "text": "– was a crucial part of local inhabitants’ ___ a long time ago"},
-            {"id": 16, "type": "fill", "text": "– helped people to survive periods of ___"},
-            {"id": 17, "type": "fill", "text": "– prevents ___ of the soil"},
-            {"id": 18, "type": "fill", "text": "– prevents land from becoming a ___"}
+            {"id": 14, "type": "inline"},
+            {"id": 15, "type": "inline"},
+            {"id": 16, "type": "inline"},
+            {"id": 17, "type": "inline"},
+            {"id": 18, "type": "inline"}
           ]
         },
         {
-          "instruction": "<strong>Questions 19-21</strong><br>Complete the table below. Choose NO MORE THAN TWO WORDS from the passage. (Part of tree | Traditional Use)",
+          "instruction": "<strong>Questions 19-21</strong><br>Complete the table below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+          "html_content": "<table><thead><tr><th colspan='2' style='text-align: center;'>Traditional uses of the huarango tree</th></tr><tr><th>Part of tree</th><th>Traditional use</th></tr></thead><tbody><tr><td>[INPUT:19]</td><td>Fuel</td></tr><tr><td>bark and [INPUT:20]</td><td>Medicine</td></tr><tr><td>[INPUT:21]</td><td>construction</td></tr></tbody></table>",
           "items": [
-            {"id": 19, "type": "fill", "text": "___ : Fuel"},
-            {"id": 20, "type": "fill", "text": "bark and ___ : Medicine"},
-            {"id": 21, "type": "fill", "text": "___ : construction"}
+            {"id": 19, "type": "inline"},
+            {"id": 20, "type": "inline"},
+            {"id": 21, "type": "inline"}
           ]
         },
         {
-          "instruction": "<strong>Questions 22-26</strong><br>Do the following statements agree with the information? Write TRUE, FALSE, or NOT GIVEN.",
+          "instruction": "<strong>Questions 22-26</strong><br>Do the following statements agree with the information given in Reading Passage?<br>Write TRUE, FALSE, or NOT GIVEN.",
           "items": [
             {"id": 22, "type": "fill", "text": "Local families have told Whaley about some traditional uses of huarango products. ___"},
             {"id": 23, "type": "fill", "text": "Farmer Alberto Benevides is now making a good profit from growing huarangos. ___"},
@@ -149,16 +152,17 @@
           ]
         },
         {
-          "instruction": "<strong>Questions 31-34</strong><br>Complete the summary using the list of words, A-G, below. (A pressure, B satisfaction, C intuition, D promotion, E reliance, F confidence, G information)",
+          "instruction": "<strong>Questions 31-34</strong><br>Complete the summary using the list of words, A-G, below.<br><br><strong>A</strong> pressure &nbsp;&nbsp;&nbsp;&nbsp; <strong>B</strong> satisfaction &nbsp;&nbsp;&nbsp;&nbsp; <strong>C</strong> intuition &nbsp;&nbsp;&nbsp;&nbsp; <strong>D</strong> promotion<br><strong>E</strong> reliance &nbsp;&nbsp;&nbsp;&nbsp; <strong>F</strong> confidence &nbsp;&nbsp;&nbsp;&nbsp; <strong>G</strong> information",
+          "html_content": "<div style='line-height: 2; padding: 15px; background: #fdfdfd; border: 1px solid #ddd; border-radius: 5px;'><h4 style='text-align: center; margin-top: 0;'>The ‘algorithmication’ of jobs</h4><p>Stella Pachidi of Cambridge Judge Business School has been focusing on the ‘algorithmication’ of jobs which rely not on production but on [INPUT:31] .</p><p>While monitoring a telecommunications company, Pachidi observed a growing [INPUT:32] on the recommendations made by AI, as workers begin to learn through the ‘algorithm’s eyes’. Meanwhile, staff are deterred from experimenting and using their own [INPUT:33] , and are therefore prevented from achieving innovation.</p><p>To avoid the kind of situations which Pachidi observed, researchers are trying to make AI’s decision-making process easier to comprehend, and to increase users’ [INPUT:34] with regard to the technology.</p></div>",
           "items": [
-            {"id": 31, "type": "fill", "text": "Stella Pachidi has been focusing on the ‘algorithmication’ of jobs which rely not on production but on ___ ."},
-            {"id": 32, "type": "fill", "text": "Pachidi observed a growing ___ on the recommendations made by AI..."},
-            {"id": 33, "type": "fill", "text": "Meanwhile, staff are deterred from experimenting and using their own ___ ,"},
-            {"id": 34, "type": "fill", "text": "researchers are trying to make AI’s decision-making process easier to comprehend, and to increase users’ ___ with regard to the technology."}
+            {"id": 31, "type": "inline"},
+            {"id": 32, "type": "inline"},
+            {"id": 33, "type": "inline"},
+            {"id": 34, "type": "inline"}
           ]
         },
         {
-          "instruction": "<strong>Questions 35-40</strong><br>Match each statement with the correct person, A, B or C. (A. Stella Pachidi, B. Hamish Low, C. Ewan McGaughey)",
+          "instruction": "<strong>Questions 35-40</strong><br>Look at the following statements (Questions 35-40) and the list of people below.<br>Match each statement with the correct person, A, B or C.<br><br><strong>List of people</strong><br><strong>A</strong> Stella Pachidi<br><strong>B</strong> Hamish Low<br><strong>C</strong> Ewan McGaughey",
           "items": [
             {"id": 35, "type": "fill", "text": "Greater levels of automation will not result in lower employment. ___"},
             {"id": 36, "type": "fill", "text": "There are several reasons why AI is appealing to businesses. ___"},
