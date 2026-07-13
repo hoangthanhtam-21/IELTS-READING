@@ -30,7 +30,9 @@
         
         .passage-title { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
         .paragraph { margin-bottom: 15px; }
-        .highlight { background-color: #ffeaa7; padding: 2px; border-radius: 3px; transition: background-color 0.5s; }
+        
+        /* Hiệu ứng highlight cho câu chứa đáp án */
+        .highlight { background-color: #ffeb3b; color: #000; border-radius: 4px; padding: 2px 4px; box-shadow: 0 0 6px rgba(255, 235, 59, 0.8); font-weight: 600; transition: background-color 0.5s ease-in-out; display: inline; }
         
         .question-group { margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .q-title { font-weight: bold; margin-bottom: 15px; color: #34495e; }
@@ -329,7 +331,7 @@
                         expBox.innerHTML = `
                             <span class="correct-ans-label">Correct Answer: ${ansData.answer}</span>
                             <div><strong>Explanation:</strong> ${ansData.explanation}</div>
-                            ${ansData.location ? `<a class="loc-link" onclick="scrollToPassage('${ansData.location}')">➜ View in passage</a>` : ''}
+                            ${ansData.location ? `<a class="loc-link" onclick="scrollToPassage('${ansData.location}')">➜ View exact sentence in passage</a>` : ''}
                         `;
                     }
                 });
@@ -341,6 +343,7 @@
             const target = document.getElementById(locId);
             if(target) {
                 target.classList.add('highlight');
+                // Scroll parent container to the specific sentence
                 target.scrollIntoView({behavior: 'smooth', block: 'center'});
             } else {
                 alert('Location not mapped in this demo.');
