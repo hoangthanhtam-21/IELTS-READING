@@ -8,7 +8,6 @@
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f4f7f6; }
         
-        /* Header & Navigation */
         header { background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; }
         .timer-container { font-size: 24px; font-weight: bold; background: #e74c3c; padding: 5px 15px; border-radius: 5px; }
         .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 14px; transition: 0.3s; }
@@ -17,7 +16,6 @@
         .btn-success { background: #2ecc71; color: white; }
         .btn-success:hover { background: #27ae60; }
         
-        /* Progress Bar */
         #progress-container { background: white; padding: 10px 30px; border-bottom: 1px solid #ddd; }
         #progress-bar { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
         .prog-box { width: 30px; height: 30px; border: 1px solid #bdc3c7; border-radius: 3px; display: flex; justify-content: center; align-items: center; font-size: 12px; cursor: pointer; background: #ecf0f1; }
@@ -25,17 +23,15 @@
         .prog-box.correct { background: #2ecc71; color: white; border-color: #27ae60; }
         .prog-box.incorrect { background: #e74c3c; color: white; border-color: #c0392b; }
         
-        /* Main Layout */
         main { display: flex; flex: 1; overflow: hidden; }
         #left-panel, #right-panel { flex: 1; padding: 30px; overflow-y: auto; }
         #left-panel { border-right: 2px solid #ddd; background: white; line-height: 1.8; font-size: 16px; text-align: justify; }
-        #right-panel { background: #fafafa; }
+        #right-panel { background: #fafafa; line-height: 1.6; }
         
         .passage-title { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
         .paragraph { margin-bottom: 15px; }
         .highlight { background-color: #ffeaa7; padding: 2px; border-radius: 3px; transition: background-color 0.5s; }
         
-        /* Questions */
         .question-group { margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .q-title { font-weight: bold; margin-bottom: 15px; color: #34495e; }
         .q-item { margin-bottom: 15px; }
@@ -45,15 +41,17 @@
         .choice-label { display: block; margin-bottom: 8px; cursor: pointer; }
         .choice-label input { margin-right: 10px; }
         
-        /* Navigation Buttons */
+        /* Table Styles for Q19-21 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { border: 1px solid #bdc3c7; padding: 12px; text-align: left; }
+        th { background-color: #ecf0f1; font-weight: bold; }
+
         .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
         
-        /* Start & Result Screens */
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:1000; }
         .modal { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; max-width: 500px; width: 90%; }
         .modal h1 { color: #2c3e50; margin-bottom: 10px; }
         
-        /* Explanations */
         .explanation-box { display: none; background: #e8f4f8; border-left: 4px solid #3498db; padding: 15px; margin-top: 10px; border-radius: 0 5px 5px 0; font-size: 14px; }
         .correct-ans-label { font-weight: bold; color: #27ae60; display: block; margin-bottom: 5px; }
         .loc-link { display: inline-block; margin-top: 10px; color: #e74c3c; text-decoration: none; font-weight: bold; font-size: 13px; cursor: pointer; }
@@ -64,7 +62,6 @@
 </head>
 <body>
 
-    <!-- Start Screen -->
     <div id="start-screen" class="overlay">
         <div class="modal">
             <h1>IELTS Reading Simulator</h1>
@@ -76,7 +73,6 @@
         </div>
     </div>
 
-    <!-- Result Screen -->
     <div id="result-screen" class="overlay hidden">
         <div class="modal">
             <h1>Test Completed!</h1>
@@ -87,36 +83,27 @@
     </div>
 
     <header>
-        <div>
-            <strong>IELTS Academic Reading</strong>
-        </div>
+        <div><strong>IELTS Academic Reading</strong></div>
         <div class="timer-container" id="timer">60:00</div>
-        <div>
-            <button class="btn btn-success" id="submit-btn" onclick="submitTest()">Submit Test</button>
-        </div>
+        <div><button class="btn btn-success" id="submit-btn" onclick="submitTest()">Submit Test</button></div>
     </header>
 
     <div id="progress-container">
         <div style="font-size: 14px; font-weight: bold;">Progress: <span id="answered-count">0</span> / 40</div>
-        <div id="progress-bar">
-            <!-- Rendered by JS -->
-        </div>
+        <div id="progress-bar"></div>
     </div>
 
     <main>
-        <!-- Left Panel: Reading Passage -->
         <div id="left-panel">
             <h2 class="passage-title" id="p-title">Loading...</h2>
             <div id="p-content"></div>
         </div>
 
-        <!-- Right Panel: Questions -->
         <div id="right-panel">
             <div id="q-content"></div>
-            
             <div class="nav-buttons">
-                <button class="btn btn-primary" id="btn-prev" onclick="changePassage(-1)">&#8592; Previous Passage</button>
-                <button class="btn btn-primary" id="btn-next" onclick="changePassage(1)">Next Passage &#8594;</button>
+                <button class="btn btn-primary" id="btn-prev" onclick="changePassage(-1)">&#8592; Previous</button>
+                <button class="btn btn-primary" id="btn-next" onclick="changePassage(1)">Next &#8594;</button>
             </div>
         </div>
     </main>
@@ -127,26 +114,22 @@
         let currentPassage = 0;
         let userAnswers = {};
         let timerInterval;
-        let timeLeft = 3600; // 60 minutes
+        let timeLeft = 3600; 
         let isSubmitted = false;
 
-        // Load JSON data
         async function loadData() {
             try {
                 const resExam = await fetch('exam.json');
                 examData = await resExam.json();
-                
                 const resAns = await fetch('answers.json');
                 answersData = await resAns.json();
-                
                 initProgressBar();
             } catch (err) {
-                console.error("Error loading data. Make sure you are running on a server (like GitHub Pages).", err);
+                console.error("Error loading data", err);
                 alert("Failed to load test data. Check console for details.");
             }
         }
 
-        // Start Test
         function startTest() {
             if(!examData) { alert("Data not loaded yet!"); return; }
             document.getElementById('start-screen').classList.add('hidden');
@@ -154,7 +137,6 @@
             startTimer();
         }
 
-        // Timer
         function startTimer() {
             const timerEl = document.getElementById('timer');
             timerInterval = setInterval(() => {
@@ -167,11 +149,10 @@
                 let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
                 let s = (timeLeft % 60).toString().padStart(2, '0');
                 timerEl.innerText = `${m}:${s}`;
-                if(timeLeft <= 300) timerEl.style.backgroundColor = '#c0392b'; // red warning last 5 mins
+                if(timeLeft <= 300) timerEl.style.backgroundColor = '#c0392b';
             }, 1000);
         }
 
-        // Init Progress Bar
         function initProgressBar() {
             const pb = document.getElementById('progress-bar');
             pb.innerHTML = '';
@@ -181,15 +162,13 @@
                 box.id = 'prog-' + i;
                 box.innerText = i;
                 box.onclick = () => {
-                    // Find which passage this question belongs to
                     let targetPassage = examData.passages.findIndex(p => p.questions.some(g => g.items.some(q => q.id === i)));
                     if(targetPassage !== -1 && targetPassage !== currentPassage) {
                         currentPassage = targetPassage;
                         renderPassage(currentPassage);
                     }
-                    // scroll to question
                     setTimeout(() => {
-                        let qEl = document.getElementById('q-item-' + i);
+                        let qEl = document.getElementById('q-item-' + i) || document.getElementById('exp-' + i);
                         if(qEl) qEl.scrollIntoView({behavior: 'smooth', block: 'center'});
                     }, 100);
                 };
@@ -197,65 +176,67 @@
             }
         }
 
-        // Render Passage and Questions
         function renderPassage(index) {
             const passage = examData.passages[index];
-            
-            // Render Passage Text
             document.getElementById('p-title').innerText = passage.title;
+            
             let contentHtml = '';
             passage.text.forEach(para => {
                 contentHtml += `<div class="paragraph" id="${para.id}">${para.content}</div>`;
             });
             document.getElementById('p-content').innerHTML = contentHtml;
 
-            // Render Questions
             let qHtml = '';
             passage.questions.forEach(group => {
                 qHtml += `<div class="question-group">`;
                 qHtml += `<div class="q-title">${group.instruction}</div>`;
                 
-                group.items.forEach(q => {
-                    qHtml += `<div class="q-item" id="q-item-${q.id}">`;
-                    
-                    if(q.type === 'fill') {
+                if(group.html_content) {
+                    let processedHtml = group.html_content;
+                    let explanationsHtml = '';
+                    group.items.forEach(q => {
                         let val = userAnswers[q.id] || '';
                         let inputHtml = `<input type="text" class="input-fill" data-qid="${q.id}" value="${val}" oninput="handleInput(this)" ${isSubmitted?'disabled':''}>`;
-                        qHtml += `<span>${q.id}. ${q.text.replace('___', inputHtml)}</span>`;
-                    } 
-                    else if(q.type === 'choice') {
-                        qHtml += `<div><strong>${q.id}.</strong> ${q.text}</div>`;
-                        q.options.forEach(opt => {
-                            let checked = userAnswers[q.id] === opt.value ? 'checked' : '';
-                            qHtml += `<label class="choice-label">
-                                <input type="radio" name="q${q.id}" data-qid="${q.id}" value="${opt.value}" onchange="handleInput(this)" ${checked} ${isSubmitted?'disabled':''}>
-                                ${opt.text}
-                            </label>`;
-                        });
-                    }
-                    
-                    // Add explanation placeholder
-                    qHtml += `<div id="exp-${q.id}" class="explanation-box"></div>`;
-                    qHtml += `</div>`;
-                });
+                        processedHtml = processedHtml.replace(`[INPUT:${q.id}]`, `<strong style="color:#e74c3c; margin-right:5px;">${q.id}</strong>` + inputHtml);
+                        explanationsHtml += `<div id="exp-${q.id}" class="explanation-box"></div>`;
+                    });
+                    qHtml += `<div>${processedHtml}</div>`;
+                    qHtml += explanationsHtml;
+                } else {
+                    group.items.forEach(q => {
+                        qHtml += `<div class="q-item" id="q-item-${q.id}">`;
+                        
+                        if(q.type === 'fill') {
+                            let val = userAnswers[q.id] || '';
+                            let inputHtml = `<input type="text" class="input-fill" data-qid="${q.id}" value="${val}" oninput="handleInput(this)" ${isSubmitted?'disabled':''}>`;
+                            qHtml += `<span>${q.id}. ${q.text.replace('___', inputHtml)}</span>`;
+                        } 
+                        else if(q.type === 'choice') {
+                            qHtml += `<div><strong>${q.id}.</strong> ${q.text}</div>`;
+                            q.options.forEach(opt => {
+                                let checked = userAnswers[q.id] === opt.value ? 'checked' : '';
+                                qHtml += `<label class="choice-label">
+                                    <input type="radio" name="q${q.id}" data-qid="${q.id}" value="${opt.value}" onchange="handleInput(this)" ${checked} ${isSubmitted?'disabled':''}>
+                                    ${opt.text}
+                                </label>`;
+                            });
+                        }
+                        qHtml += `<div id="exp-${q.id}" class="explanation-box"></div>`;
+                        qHtml += `</div>`;
+                    });
+                }
                 qHtml += `</div>`;
             });
             document.getElementById('q-content').innerHTML = qHtml;
 
-            // Update Navigation Buttons
             document.getElementById('btn-prev').style.visibility = index === 0 ? 'hidden' : 'visible';
             document.getElementById('btn-next').style.visibility = index === examData.passages.length - 1 ? 'hidden' : 'visible';
 
-            // Auto-resize existing inputs
             document.querySelectorAll('.input-fill').forEach(el => autoResize(el));
             
-            // Show answers if already submitted
-            if(isSubmitted) {
-                showExplanationsForCurrentPassage();
-            }
+            if(isSubmitted) showExplanationsForCurrentPassage();
         }
 
-        // Handle Input & Auto-resize
         function handleInput(el) {
             const qid = el.getAttribute('data-qid');
             const val = el.value.trim();
@@ -263,7 +244,6 @@
             
             if(el.classList.contains('input-fill')) autoResize(el);
             
-            // Update progress bar
             const box = document.getElementById('prog-' + qid);
             if(val !== '') box.classList.add('answered');
             else box.classList.remove('answered');
@@ -271,9 +251,7 @@
             document.getElementById('answered-count').innerText = Object.values(userAnswers).filter(v => v !== '').length;
         }
 
-        function autoResize(el) {
-            el.style.width = ((el.value.length + 2) * 10) + 'px';
-        }
+        function autoResize(el) { el.style.width = ((el.value.length + 2) * 10) + 'px'; }
 
         function changePassage(dir) {
             currentPassage += dir;
@@ -282,21 +260,17 @@
             document.getElementById('right-panel').scrollTop = 0;
         }
 
-        // Submit Logic
         function submitTest() {
             if(!isSubmitted && !confirm("Are you sure you want to submit your test?")) return;
             
             clearInterval(timerInterval);
             isSubmitted = true;
-            
             let correctCount = 0;
             
-            // Check answers
             for(let i=1; i<=40; i++) {
                 let uAns = (userAnswers[i] || '').toString().toLowerCase().trim();
                 let cAns = answersData[i].answer.toString().toLowerCase().trim();
                 
-                // Handle multiple accepted answers like "leaves and bark" or "leaves"
                 let isCorrect = false;
                 if (cAns.includes('/')) {
                     let options = cAns.split('/').map(s => s.trim());
@@ -304,7 +278,6 @@
                 } else if(uAns === cAns) {
                     isCorrect = true;
                 }
-                // Custom check for IELTS loose format e.g. (its / huarango / the) branches
                 let cleanCorrect = cAns.replace(/[()]/g, '').trim();
                 if(uAns !== '' && (uAns === cAns || uAns === cleanCorrect || cAns.includes(uAns) && uAns.length > 3)) {
                     if(uAns === cAns || uAns === cleanCorrect) isCorrect = true;
@@ -320,7 +293,6 @@
                 }
             }
             
-            // Band conversion
             let band = "0.0";
             if(correctCount >= 39) band = "9.0";
             else if(correctCount >= 37) band = "8.5";
@@ -343,7 +315,7 @@
 
         function showReview() {
             document.getElementById('result-screen').classList.add('hidden');
-            renderPassage(currentPassage); // Re-render to show explanations
+            renderPassage(currentPassage);
         }
 
         function showExplanationsForCurrentPassage() {
@@ -366,7 +338,6 @@
 
         function scrollToPassage(locId) {
             document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
-            
             const target = document.getElementById(locId);
             if(target) {
                 target.classList.add('highlight');
