@@ -3,398 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Reading Simulation</title>
+    <title>IELTS Reading Simulator</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            --bg: #f3f4f6;
-            --border: #d1d5db;
-            --correct: #16a34a;
-            --incorrect: #dc2626;
-        }
-        body {
-            margin: 0; font-family: Arial, sans-serif; height: 100vh; display: flex; flex-direction: column;
-        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f4f7f6; }
+        
+        /* Header & Navigation */
+        header { background: #2c3e50; color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 10; }
+        .timer-container { font-size: 24px; font-weight: bold; background: #e74c3c; padding: 5px 15px; border-radius: 5px; }
+        .btn { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: #2ecc71; color: white; }
+        .btn-success:hover { background: #27ae60; }
+        
+        /* Progress Bar */
+        #progress-container { background: white; padding: 10px 30px; border-bottom: 1px solid #ddd; }
+        #progress-bar { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .prog-box { width: 30px; height: 30px; border: 1px solid #bdc3c7; border-radius: 3px; display: flex; justify-content: center; align-items: center; font-size: 12px; cursor: pointer; background: #ecf0f1; }
+        .prog-box.answered { background: #3498db; color: white; border-color: #2980b9; }
+        .prog-box.correct { background: #2ecc71; color: white; border-color: #27ae60; }
+        .prog-box.incorrect { background: #e74c3c; color: white; border-color: #c0392b; }
+        
+        /* Main Layout */
+        main { display: flex; flex: 1; overflow: hidden; }
+        #left-panel, #right-panel { flex: 1; padding: 30px; overflow-y: auto; }
+        #left-panel { border-right: 2px solid #ddd; background: white; line-height: 1.8; font-size: 16px; text-align: justify; }
+        #right-panel { background: #fafafa; }
+        
+        .passage-title { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
+        .paragraph { margin-bottom: 15px; }
+        .highlight { background-color: #ffeaa7; padding: 2px; border-radius: 3px; transition: background-color 0.5s; }
+        
+        /* Questions */
+        .question-group { margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .q-title { font-weight: bold; margin-bottom: 15px; color: #34495e; }
+        .q-item { margin-bottom: 15px; }
+        .input-fill { min-width: 60px; max-width: 100%; border: none; border-bottom: 2px solid #3498db; outline: none; text-align: center; font-size: 16px; background: transparent; padding: 2px 5px; color: #2c3e50; font-weight: bold; transition: width 0.2s; }
+        .input-fill:focus { border-bottom-color: #e74c3c; }
+        
+        .choice-label { display: block; margin-bottom: 8px; cursor: pointer; }
+        .choice-label input { margin-right: 10px; }
+        
+        /* Navigation Buttons */
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
+        
         /* Start & Result Screens */
-        #start-screen, #result-screen {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: var(--bg);
-        }
-        button {
-            padding: 10px 20px; font-size: 16px; cursor: pointer; background: var(--primary); color: white; border: none; border-radius: 5px;
-        }
-        button:disabled { background: #9ca3af; cursor: not-allowed; }
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:1000; }
+        .modal { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; max-width: 500px; width: 90%; }
+        .modal h1 { color: #2c3e50; margin-bottom: 10px; }
         
-        /* Main Test UI */
-        #test-screen { display: none; flex-direction: column; height: 100vh; }
-        #header {
-            display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; border-bottom: 1px solid var(--border);
-        }
-        #timer { font-size: 20px; font-weight: bold; color: var(--primary); }
-        #progress-container { flex-grow: 1; margin: 0 20px; display: flex; gap: 2px; }
-        .prog-box {
-            flex: 1; height: 20px; background: #e5e7eb; border: 1px solid #9ca3af; text-align: center; font-size: 10px; line-height: 20px; cursor: pointer;
-        }
-        .prog-box.answered { background: var(--primary); color: white; }
-        .prog-box.correct { background: var(--correct); color: white; }
-        .prog-box.incorrect { background: var(--incorrect); color: white; }
-
-        #main-area { display: flex; flex-grow: 1; overflow: hidden; }
-        .pane { flex: 1; padding: 20px; overflow-y: auto; }
-        #passage-pane { border-right: 2px solid var(--border); background: #fafafa; font-size: 16px; line-height: 1.6; }
-        #question-pane { background: white; }
+        /* Explanations */
+        .explanation-box { display: none; background: #e8f4f8; border-left: 4px solid #3498db; padding: 15px; margin-top: 10px; border-radius: 0 5px 5px 0; font-size: 14px; }
+        .correct-ans-label { font-weight: bold; color: #27ae60; display: block; margin-bottom: 5px; }
+        .loc-link { display: inline-block; margin-top: 10px; color: #e74c3c; text-decoration: none; font-weight: bold; font-size: 13px; cursor: pointer; }
+        .loc-link:hover { text-decoration: underline; }
         
-        #footer {
-            display: flex; justify-content: space-between; padding: 10px 20px; background: white; border-top: 1px solid var(--border);
-        }
-        
-        /* Inputs & Highlight */
-        input[type="text"] {
-            border: none; border-bottom: 2px solid black; background: transparent; outline: none; text-align: center; font-size: 16px; min-width: 40px;
-        }
-        .highlight { background-color: #fef08a; font-weight: bold; transition: background-color 0.5s; }
-        .explanation {
-            display: none; background: #f0fdf4; border: 1px solid var(--correct); padding: 10px; margin-top: 10px; border-radius: 5px; font-size: 14px;
-        }
-        .explanation.show { display: block; }
-        .loc-btn { background: #4b5563; font-size: 12px; padding: 5px 10px; margin-top: 5px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- Màn hình Bắt đầu -->
-    <div id="start-screen">
-        <h1>IELTS Reading Mock Test</h1>
-        <p>3 Passages | 40 Questions | 60 Minutes</p>
-        <button onclick="startTest()">Start Test</button>
-    </div>
-
-    <!-- Màn hình Làm bài -->
-    <div id="test-screen">
-        <div id="header">
-            <div id="timer">60:00</div>
-            <div id="progress-container"></div>
-            <div id="passage-indicator">Passage 1 of 3</div>
-        </div>
-        
-        <div id="main-area">
-            <div id="passage-pane" class="pane"></div>
-            <div id="question-pane" class="pane"></div>
-        </div>
-        
-        <div id="footer">
-            <button id="btn-back" onclick="changePassage(-1)" disabled>Back</button>
-            <button id="btn-submit" onclick="submitTest()" style="background: var(--correct); display: none;">Submit Test</button>
-            <button id="btn-next" onclick="changePassage(1)">Next Passage</button>
+    <!-- Start Screen -->
+    <div id="start-screen" class="overlay">
+        <div class="modal">
+            <h1>IELTS Reading Simulator</h1>
+            <p><strong>Duration:</strong> 60 Minutes</p>
+            <p><strong>Questions:</strong> 40</p>
+            <p><strong>Passages:</strong> 3</p>
+            <p style="color:#7f8c8d; font-size:14px; margin-bottom:20px;">The timer will start immediately after you click Start.</p>
+            <button class="btn btn-primary" style="font-size: 18px; padding: 15px 40px;" onclick="startTest()">Start Test</button>
         </div>
     </div>
 
-    <!-- Màn hình Kết quả -->
-    <div id="result-screen">
-        <h1>Test Results</h1>
-        <h2 id="score-text">Score: 0 / 40</h2>
-        <h2 id="band-text">IELTS Band: 0.0</h2>
-        <button onclick="reviewAnswers()">Review Answers</button>
+    <!-- Result Screen -->
+    <div id="result-screen" class="overlay hidden">
+        <div class="modal">
+            <h1>Test Completed!</h1>
+            <h2 style="font-size: 48px; color: #27ae60; margin: 10px 0;"><span id="score-correct">0</span>/40</h2>
+            <p style="font-size: 20px;">Estimated IELTS Band: <strong><span id="score-band">0.0</span></strong></p>
+            <button class="btn btn-primary" style="margin-top:20px;" onclick="showReview()">Review Answers</button>
+        </div>
     </div>
+
+    <header>
+        <div>
+            <strong>IELTS Academic Reading</strong>
+        </div>
+        <div class="timer-container" id="timer">60:00</div>
+        <div>
+            <button class="btn btn-success" id="submit-btn" onclick="submitTest()">Submit Test</button>
+        </div>
+    </header>
+
+    <div id="progress-container">
+        <div style="font-size: 14px; font-weight: bold;">Progress: <span id="answered-count">0</span> / 40</div>
+        <div id="progress-bar">
+            <!-- Rendered by JS -->
+        </div>
+    </div>
+
+    <main>
+        <!-- Left Panel: Reading Passage -->
+        <div id="left-panel">
+            <h2 class="passage-title" id="p-title">Loading...</h2>
+            <div id="p-content"></div>
+        </div>
+
+        <!-- Right Panel: Questions -->
+        <div id="right-panel">
+            <div id="q-content"></div>
+            
+            <div class="nav-buttons">
+                <button class="btn btn-primary" id="btn-prev" onclick="changePassage(-1)">&#8592; Previous Passage</button>
+                <button class="btn btn-primary" id="btn-next" onclick="changePassage(1)">Next Passage &#8594;</button>
+            </div>
+        </div>
+    </main>
 
     <script>
-        // --- DỮ LIỆU BÀI THI ---
-        const testData = [
-            {
-                id: 1,
-                passage: `
-                    <h2>PASSAGE 1: Change in business organisations</h2>
-                    <p id="loc-4"><b>A.</b> The forces that operate to bring about change in organisations can be thought of as winds which are many and varied... Sometimes, however, the winds die down to give periods of relative calm, periods of relative organisational stability. <span id="loc-8">Such a period was the agricultural age</span>, which Goodman (1995) maintains prevailed in Europe and western societies as a whole until the early 1700s. During this period, wealth was created in the context of an agriculturally based society influenced mainly by local markets...</p>
-                    <p id="loc-2"><b>B.</b> To maintain the meteorological metaphor, stronger winds of change blew to bring in the Industrial Revolution... <span id="loc-10">It was characterised by a series of inventions and innovations</span> that reduced the number of people needed to work the land... enabling companies to structure their organisations along what Burns and Stalker (1966) described as mechanistic lines, that is as systems of strict hierarchical structures and firm means of control.</p>
-                    <p id="loc-5"><b>C.</b> This situation prevailed for some time, with demand still coming mainly from the domestic market and organisations striving to fill the ‘supply gap’... <span id="loc-7">Organisations of this period can be regarded as ‘task-oriented’, with effort being put into increasing production through more effective and efficient production processes.</span></p>
-                    <p id="loc-6"><b>D.</b> As time passed, this favourable period for organisations began to decline... and, as technological advancements brought about increased productivity, supply overtook demand.</p>
-                    <p id="loc-9"><b>E.</b> At the same time, organisations faced more intensive competition... the emphasis moved towards adding value to goods and services - what Goodman calls the value-oriented time...</p>
-                    <p id="loc-1"><b>F.</b> Today, in the post-industrial age, most people agree that organisational life is becoming ever more uncertain... According to the article, Leach anticipates that: ‘In 20 years time, 20-25 percent of the workforce will be <span id="loc-11">temporary</span> workers and many more will be flexible, ... 50 percent will work from <span id="loc-12">home</span> in some form.’</p>
-                    <p id="loc-3"><b>G.</b> Whether all this will happen is arguable... Consequently, it is crucial that organisational managers and decision makers are aware of, and able to analyse the <span id="loc-13">factors</span> which trigger organisational change.</p>
-                `,
-                questions: `
-                    <h3>Questions 1-5</h3>
-                    <p>Which paragraph contains the following information? Write the correct letter, A-G.</p>
-                    <p>1. some specific predictions about businesses and working practices <input type="text" id="q1" oninput="resizeInput(this)" onchange="updateProgress(1)"></p>
-                    <div id="exp-1" class="explanation"></div>
-                    <p>2. reference to the way company employees were usually managed <input type="text" id="q2" oninput="resizeInput(this)" onchange="updateProgress(2)"></p>
-                    <div id="exp-2" class="explanation"></div>
-                    <p>3. a warning for business leaders <input type="text" id="q3" oninput="resizeInput(this)" onchange="updateProgress(3)"></p>
-                    <div id="exp-3" class="explanation"></div>
-                    <p>4. the description of an era notable for the relative absence of change <input type="text" id="q4" oninput="resizeInput(this)" onchange="updateProgress(4)"></p>
-                    <div id="exp-4" class="explanation"></div>
-                    <p>5. a reason why customer satisfaction was not a high priority <input type="text" id="q5" oninput="resizeInput(this)" onchange="updateProgress(5)"></p>
-                    <div id="exp-5" class="explanation"></div>
-                    
-                    <h3>Questions 6-10</h3>
-                    <p>Match each characteristic with the correct period, A, B or C.</p>
-                    <p>6. a surplus of goods. <input type="text" id="q6" oninput="resizeInput(this)" onchange="updateProgress(6)"></p>
-                    <div id="exp-6" class="explanation"></div>
-                    <p>7. an emphasis on production quantity. <input type="text" id="q7" oninput="resizeInput(this)" onchange="updateProgress(7)"></p>
-                    <div id="exp-7" class="explanation"></div>
-                    <p>8. the proximity of consumers to workplaces. <input type="text" id="q8" oninput="resizeInput(this)" onchange="updateProgress(8)"></p>
-                    <div id="exp-8" class="explanation"></div>
-                    <p>9. a focus on the quality of goods. <input type="text" id="q9" oninput="resizeInput(this)" onchange="updateProgress(9)"></p>
-                    <div id="exp-9" class="explanation"></div>
-                    <p>10. new products and new ways of working. <input type="text" id="q10" oninput="resizeInput(this)" onchange="updateProgress(10)"></p>
-                    <div id="exp-10" class="explanation"></div>
-
-                    <h3>Questions 11-13</h3>
-                    <p>Complete the summary below. Choose ONE WORD ONLY from the passage.</p>
-                    <p>One leading economist suggested that by 2020, up to a quarter of employees would be 11 <input type="text" id="q11" oninput="resizeInput(this)" onchange="updateProgress(11)"> and half of all employees would be based in the 12 <input type="text" id="q12" oninput="resizeInput(this)" onchange="updateProgress(12)">. ... business leaders need to understand the 13 <input type="text" id="q13" oninput="resizeInput(this)" onchange="updateProgress(13)"> that will be influential.</p>
-                    <div id="exp-11" class="explanation"></div>
-                    <div id="exp-12" class="explanation"></div>
-                    <div id="exp-13" class="explanation"></div>
-                `
-            },
-            {
-                id: 2,
-                passage: `<h2>PASSAGE 2: The return of the huarango</h2><p>... (Bạn dán nội dung văn bản Passage 2 vào đây) ...</p>`,
-                questions: `<h3>Questions 14-26</h3><p>... (Bạn tạo các thẻ input type="text" id="q14" tương tự Passage 1) ...</p>`
-            },
-            {
-                id: 3,
-                passage: `
-                    <h2>PASSAGE 3: The future of work</h2>
-                    <p id="loc-27">According to a leading business consultancy, 3–14% of the global workforce will need to switch to a different occupation within the next 10-15 years, and all workers will need to adapt as their occupations evolve alongside increasingly capable machines. Automation - or 'embodied artificial intelligence' (AI) - is one aspect of the disruptive effects of technology on the labour market. 'Disembodied Al’, like the algorithms running in our smartphones, is another.</p>
-                    <p>... (Dán phần còn lại của văn bản vào đây) ...</p>
-                `,
-                questions: `
-                    <h3>Questions 27-30 (Multiple Choice)</h3>
-                    <p>27. The first paragraph tells us about</p>
-                    <label><input type="radio" name="q27" value="A" onchange="updateProgress(27)"> A. the kinds of jobs...</label><br>
-                    <label><input type="radio" name="q27" value="B" onchange="updateProgress(27)"> B. the extent to which AI will alter the nature of the work that people do.</label><br>
-                    <label><input type="radio" name="q27" value="C" onchange="updateProgress(27)"> C. the proportion of...</label><br>
-                    <label><input type="radio" name="q27" value="D" onchange="updateProgress(27)"> D. the difference between...</label><br>
-                    <div id="exp-27" class="explanation"></div>
-                    <p>... (Làm tương tự cho câu 28-40) ...</p>
-                `
-            }
-        ];
-
-        // --- ĐÁP ÁN VÀ GIẢI THÍCH ---
-        const answerKey = {
-            1: { ans: "F", exp: "Đoạn F nêu rõ những dự đoán về lực lượng lao động tương lai.", loc: "loc-1" },
-            2: { ans: "B", exp: "Đoạn B mô tả cách các công ty được tổ chức và kiểm soát chặt chẽ.", loc: "loc-2" },
-            3: { ans: "G", exp: "Câu này đóng vai trò như một cảnh báo nếu không phân tích hiểu rõ yếu tố thay đổi.", loc: "loc-3" },
-            4: { ans: "A", exp: "Đoạn văn mô tả thời kỳ nông nghiệp là một thời kỳ ít biến động.", loc: "loc-4" },
-            5: { ans: "C", exp: "Vì cầu vượt quá cung, các công ty không cần chú trọng tới nhu cầu chi tiết của khách hàng.", loc: "loc-5" },
-            6: { ans: "C", exp: "Thời kỳ hậu công nghiệp, khi hàng hóa sản xuất ra nhiều hơn nhu cầu.", loc: "loc-6" },
-            7: { ans: "B", exp: "Thời kỳ công nghiệp chú trọng vào việc sản xuất hàng loạt.", loc: "loc-7" },
-            8: { ans: "A", exp: "Trong thời kỳ nông nghiệp, lao động và khách hàng chủ yếu sống gần nơi sản xuất.", loc: "loc-8" },
-            9: { ans: "C", exp: "Thời kỳ hậu công nghiệp nhấn mạnh đến chất lượng và giá trị gia tăng.", loc: "loc-9" },
-            10: { ans: "B", exp: "Thời kỳ công nghiệp được đặc trưng bởi sự ra đời của nhiều sản phẩm mới.", loc: "loc-10" },
-            11: { ans: "temporary", exp: "Đoạn F đề cập 20-25% lực lượng lao động sẽ là lao động tạm thời.", loc: "loc-11" },
-            12: { ans: "home", exp: "Đoạn F nói rõ rằng một nửa số người sẽ làm việc tại nhà.", loc: "loc-12" },
-            13: { ans: "factors", exp: "Đoạn G nói rõ vai trò quan trọng của việc phân tích các factors (yếu tố).", loc: "loc-13" },
-            // ... Bạn thêm đáp án từ 14 đến 26 vào đây
-            27: { ans: "B", exp: "Đoạn A nói AI sẽ thay đổi bản chất công việc khiến nhiều người phải đổi nghề hoặc thích nghi.", loc: "loc-27" }
-        };
-
-        // --- LOGIC HOẠT ĐỘNG ---
+        let examData = null;
+        let answersData = null;
         let currentPassage = 0;
-        let timer;
-        let timeLeft = 3600; // 60 minutes
         let userAnswers = {};
+        let timerInterval;
+        let timeLeft = 3600; // 60 minutes
         let isSubmitted = false;
 
-        // Khởi tạo Progress Bar
-        const progressContainer = document.getElementById("progress-container");
-        for (let i = 1; i <= 40; i++) {
-            let box = document.createElement("div");
-            box.className = "prog-box";
-            box.id = "prog-" + i;
-            box.innerText = i;
-            box.onclick = () => alert("Question " + i); // Có thể nâng cấp để click nhảy đến câu
-            progressContainer.appendChild(box);
-        }
-
-        function startTest() {
-            document.getElementById("start-screen").style.display = "none";
-            document.getElementById("test-screen").style.display = "flex";
-            renderPassage();
-            timer = setInterval(updateTimer, 1000);
-        }
-
-        function updateTimer() {
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                submitTest();
-                return;
-            }
-            timeLeft--;
-            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            let s = (timeLeft % 60).toString().padStart(2, '0');
-            document.getElementById("timer").innerText = m + ":" + s;
-        }
-
-        function renderPassage() {
-            // Lưu lại answers của trang hiện tại trước khi chuyển (đối với input text)
-            saveCurrentInputs();
-
-            let data = testData[currentPassage];
-            document.getElementById("passage-pane").innerHTML = data.passage;
-            document.getElementById("question-pane").innerHTML = data.questions;
-            document.getElementById("passage-indicator").innerText = "Passage " + (currentPassage + 1) + " of 3";
-
-            // Phục hồi lại answers đã nhập vào UI
-            restoreInputs();
-
-            document.getElementById("btn-back").disabled = (currentPassage === 0);
-            
-            if (currentPassage === 2) {
-                document.getElementById("btn-next").style.display = "none";
-                document.getElementById("btn-submit").style.display = "inline-block";
-            } else {
-                document.getElementById("btn-next").style.display = "inline-block";
-                document.getElementById("btn-submit").style.display = "none";
-            }
-
-            // Nếu đang ở chế độ xem lại bài (sau submit)
-            if (isSubmitted) {
-                showExplanationsUI();
-            }
-        }
-
-        function changePassage(step) {
-            currentPassage += step;
-            renderPassage();
-        }
-
-        function resizeInput(el) {
-            el.style.width = ((el.value.length + 1) * 9) + 'px';
-        }
-
-        function updateProgress(qNum) {
-            let val = "";
-            let el = document.getElementById("q" + qNum);
-            if (el) { // Fill in the blank
-                val = el.value.trim();
-            } else { // Multiple choice
-                let radios = document.getElementsByName("q" + qNum);
-                for (let r of radios) {
-                    if (r.checked) val = r.value;
-                }
-            }
-            
-            userAnswers[qNum] = val;
-            let pBox = document.getElementById("prog-" + qNum);
-            if (val !== "") {
-                pBox.classList.add("answered");
-            } else {
-                pBox.classList.remove("answered");
-            }
-        }
-
-        function saveCurrentInputs() {
-            for(let i=1; i<=40; i++) {
-                let el = document.getElementById("q"+i);
-                if(el && el.value) userAnswers[i] = el.value;
+        // Load JSON data
+        async function loadData() {
+            try {
+                const resExam = await fetch('exam.json');
+                examData = await resExam.json();
                 
-                let radios = document.getElementsByName("q"+i);
-                if(radios.length > 0) {
-                    for(let r of radios) {
-                        if(r.checked) userAnswers[i] = r.value;
-                    }
-                }
+                const resAns = await fetch('answers.json');
+                answersData = await resAns.json();
+                
+                initProgressBar();
+            } catch (err) {
+                console.error("Error loading data. Make sure you are running on a server (like GitHub Pages).", err);
+                alert("Failed to load test data. Check console for details.");
             }
         }
 
-        function restoreInputs() {
+        // Start Test
+        function startTest() {
+            if(!examData) { alert("Data not loaded yet!"); return; }
+            document.getElementById('start-screen').classList.add('hidden');
+            renderPassage(currentPassage);
+            startTimer();
+        }
+
+        // Timer
+        function startTimer() {
+            const timerEl = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                if(timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitTest();
+                    return;
+                }
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+                let s = (timeLeft % 60).toString().padStart(2, '0');
+                timerEl.innerText = `${m}:${s}`;
+                if(timeLeft <= 300) timerEl.style.backgroundColor = '#c0392b'; // red warning last 5 mins
+            }, 1000);
+        }
+
+        // Init Progress Bar
+        function initProgressBar() {
+            const pb = document.getElementById('progress-bar');
+            pb.innerHTML = '';
             for(let i=1; i<=40; i++) {
-                if (userAnswers[i]) {
-                    let el = document.getElementById("q"+i);
-                    if (el) {
-                        el.value = userAnswers[i];
-                        resizeInput(el);
+                let box = document.createElement('div');
+                box.className = 'prog-box';
+                box.id = 'prog-' + i;
+                box.innerText = i;
+                box.onclick = () => {
+                    // Find which passage this question belongs to
+                    let targetPassage = examData.passages.findIndex(p => p.questions.some(g => g.items.some(q => q.id === i)));
+                    if(targetPassage !== -1 && targetPassage !== currentPassage) {
+                        currentPassage = targetPassage;
+                        renderPassage(currentPassage);
                     }
-                    let radios = document.getElementsByName("q"+i);
-                    if (radios.length > 0) {
-                        for(let r of radios) {
-                            if(r.value === userAnswers[i]) r.checked = true;
-                        }
-                    }
-                }
+                    // scroll to question
+                    setTimeout(() => {
+                        let qEl = document.getElementById('q-item-' + i);
+                        if(qEl) qEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    }, 100);
+                };
+                pb.appendChild(box);
             }
         }
 
+        // Render Passage and Questions
+        function renderPassage(index) {
+            const passage = examData.passages[index];
+            
+            // Render Passage Text
+            document.getElementById('p-title').innerText = passage.title;
+            let contentHtml = '';
+            passage.text.forEach(para => {
+                contentHtml += `<div class="paragraph" id="${para.id}">${para.content}</div>`;
+            });
+            document.getElementById('p-content').innerHTML = contentHtml;
+
+            // Render Questions
+            let qHtml = '';
+            passage.questions.forEach(group => {
+                qHtml += `<div class="question-group">`;
+                qHtml += `<div class="q-title">${group.instruction}</div>`;
+                
+                group.items.forEach(q => {
+                    qHtml += `<div class="q-item" id="q-item-${q.id}">`;
+                    
+                    if(q.type === 'fill') {
+                        let val = userAnswers[q.id] || '';
+                        let inputHtml = `<input type="text" class="input-fill" data-qid="${q.id}" value="${val}" oninput="handleInput(this)" ${isSubmitted?'disabled':''}>`;
+                        qHtml += `<span>${q.id}. ${q.text.replace('___', inputHtml)}</span>`;
+                    } 
+                    else if(q.type === 'choice') {
+                        qHtml += `<div><strong>${q.id}.</strong> ${q.text}</div>`;
+                        q.options.forEach(opt => {
+                            let checked = userAnswers[q.id] === opt.value ? 'checked' : '';
+                            qHtml += `<label class="choice-label">
+                                <input type="radio" name="q${q.id}" data-qid="${q.id}" value="${opt.value}" onchange="handleInput(this)" ${checked} ${isSubmitted?'disabled':''}>
+                                ${opt.text}
+                            </label>`;
+                        });
+                    }
+                    
+                    // Add explanation placeholder
+                    qHtml += `<div id="exp-${q.id}" class="explanation-box"></div>`;
+                    qHtml += `</div>`;
+                });
+                qHtml += `</div>`;
+            });
+            document.getElementById('q-content').innerHTML = qHtml;
+
+            // Update Navigation Buttons
+            document.getElementById('btn-prev').style.visibility = index === 0 ? 'hidden' : 'visible';
+            document.getElementById('btn-next').style.visibility = index === examData.passages.length - 1 ? 'hidden' : 'visible';
+
+            // Auto-resize existing inputs
+            document.querySelectorAll('.input-fill').forEach(el => autoResize(el));
+            
+            // Show answers if already submitted
+            if(isSubmitted) {
+                showExplanationsForCurrentPassage();
+            }
+        }
+
+        // Handle Input & Auto-resize
+        function handleInput(el) {
+            const qid = el.getAttribute('data-qid');
+            const val = el.value.trim();
+            userAnswers[qid] = val;
+            
+            if(el.classList.contains('input-fill')) autoResize(el);
+            
+            // Update progress bar
+            const box = document.getElementById('prog-' + qid);
+            if(val !== '') box.classList.add('answered');
+            else box.classList.remove('answered');
+            
+            document.getElementById('answered-count').innerText = Object.values(userAnswers).filter(v => v !== '').length;
+        }
+
+        function autoResize(el) {
+            el.style.width = ((el.value.length + 2) * 10) + 'px';
+        }
+
+        function changePassage(dir) {
+            currentPassage += dir;
+            renderPassage(currentPassage);
+            document.getElementById('left-panel').scrollTop = 0;
+            document.getElementById('right-panel').scrollTop = 0;
+        }
+
+        // Submit Logic
         function submitTest() {
-            clearInterval(timer);
-            saveCurrentInputs();
+            if(!isSubmitted && !confirm("Are you sure you want to submit your test?")) return;
+            
+            clearInterval(timerInterval);
             isSubmitted = true;
             
             let correctCount = 0;
-            for (let i = 1; i <= 40; i++) {
-                let pBox = document.getElementById("prog-" + i);
-                pBox.classList.remove("answered");
+            
+            // Check answers
+            for(let i=1; i<=40; i++) {
+                let uAns = (userAnswers[i] || '').toString().toLowerCase().trim();
+                let cAns = answersData[i].answer.toString().toLowerCase().trim();
                 
-                let userAns = (userAnswers[i] || "").toString().trim().toLowerCase();
-                let correctAns = answerKey[i] ? answerKey[i].ans.toString().trim().toLowerCase() : "";
-                
-                if (userAns !== "" && userAns === correctAns) {
+                // Handle multiple accepted answers like "leaves and bark" or "leaves"
+                let isCorrect = false;
+                if (cAns.includes('/')) {
+                    let options = cAns.split('/').map(s => s.trim());
+                    isCorrect = options.includes(uAns);
+                } else if(uAns === cAns) {
+                    isCorrect = true;
+                }
+                // Custom check for IELTS loose format e.g. (its / huarango / the) branches
+                let cleanCorrect = cAns.replace(/[()]/g, '').trim();
+                if(uAns !== '' && (uAns === cAns || uAns === cleanCorrect || cAns.includes(uAns) && uAns.length > 3)) {
+                    if(uAns === cAns || uAns === cleanCorrect) isCorrect = true;
+                }
+
+                const box = document.getElementById('prog-' + i);
+                box.classList.remove('answered');
+                if(isCorrect) {
+                    box.classList.add('correct');
                     correctCount++;
-                    pBox.classList.add("correct");
                 } else {
-                    pBox.classList.add("incorrect");
+                    box.classList.add('incorrect');
                 }
             }
+            
+            // Band conversion
+            let band = "0.0";
+            if(correctCount >= 39) band = "9.0";
+            else if(correctCount >= 37) band = "8.5";
+            else if(correctCount >= 35) band = "8.0";
+            else if(correctCount >= 33) band = "7.5";
+            else if(correctCount >= 30) band = "7.0";
+            else if(correctCount >= 27) band = "6.5";
+            else if(correctCount >= 23) band = "6.0";
+            else if(correctCount >= 19) band = "5.5";
+            else if(correctCount >= 15) band = "5.0";
+            else if(correctCount >= 13) band = "4.5";
+            else if(correctCount >= 10) band = "4.0";
+            else band = "<4.0";
 
-            document.getElementById("test-screen").style.display = "none";
-            document.getElementById("result-screen").style.display = "flex";
-            document.getElementById("score-text").innerText = "Score: " + correctCount + " / 40";
-            document.getElementById("band-text").innerText = "IELTS Band: " + calculateBand(correctCount);
+            document.getElementById('score-correct').innerText = correctCount;
+            document.getElementById('score-band').innerText = band;
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('submit-btn').classList.add('hidden');
         }
 
-        function calculateBand(score) {
-            if (score >= 39) return 9.0;
-            if (score >= 37) return 8.5;
-            if (score >= 35) return 8.0;
-            if (score >= 33) return 7.5;
-            if (score >= 30) return 7.0;
-            if (score >= 27) return 6.5;
-            if (score >= 23) return 6.0;
-            if (score >= 19) return 5.5;
-            if (score >= 15) return 5.0;
-            if (score >= 13) return 4.5;
-            if (score >= 10) return 4.0;
-            return "Below 4.0";
+        function showReview() {
+            document.getElementById('result-screen').classList.add('hidden');
+            renderPassage(currentPassage); // Re-render to show explanations
         }
 
-        function reviewAnswers() {
-            document.getElementById("result-screen").style.display = "none";
-            document.getElementById("test-screen").style.display = "flex";
-            currentPassage = 0;
-            renderPassage();
+        function showExplanationsForCurrentPassage() {
+            const passage = examData.passages[currentPassage];
+            passage.questions.forEach(group => {
+                group.items.forEach(q => {
+                    const ansData = answersData[q.id];
+                    const expBox = document.getElementById('exp-' + q.id);
+                    if(expBox && ansData) {
+                        expBox.style.display = 'block';
+                        expBox.innerHTML = `
+                            <span class="correct-ans-label">Correct Answer: ${ansData.answer}</span>
+                            <div><strong>Explanation:</strong> ${ansData.explanation}</div>
+                            ${ansData.location ? `<a class="loc-link" onclick="scrollToPassage('${ansData.location}')">➜ View in passage</a>` : ''}
+                        `;
+                    }
+                });
+            });
         }
 
-        function showExplanationsUI() {
-            for (let i = 1; i <= 40; i++) {
-                let expDiv = document.getElementById("exp-" + i);
-                if (expDiv && answerKey[i]) {
-                    let userAns = userAnswers[i] || "Trống";
-                    let isCorrect = (userAns.toLowerCase() === answerKey[i].ans.toLowerCase());
-                    let color = isCorrect ? "green" : "red";
-                    
-                    expDiv.innerHTML = \`
-                        <strong>Your answer:</strong> <span style="color:\${color}">\${userAns}</span> <br>
-                        <strong>Correct answer:</strong> <span style="color:green">\${answerKey[i].ans}</span> <br>
-                        <strong>Explanation:</strong> \${answerKey[i].exp} <br>
-                        <button class="loc-btn" onclick="highlightLocation('\${answerKey[i].loc}')">Show Location in Passage</button>
-                    \`;
-                    expDiv.classList.add("show");
-                }
-            }
-        }
-
-        function highlightLocation(locId) {
-            // Xóa highlight cũ
+        function scrollToPassage(locId) {
             document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
             
-            let target = document.getElementById(locId);
-            if (target) {
-                target.classList.add("highlight");
-                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const target = document.getElementById(locId);
+            if(target) {
+                target.classList.add('highlight');
+                target.scrollIntoView({behavior: 'smooth', block: 'center'});
+            } else {
+                alert('Location not mapped in this demo.');
             }
         }
+
+        window.onload = loadData;
     </script>
 </body>
 </html>
