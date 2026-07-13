@@ -87,13 +87,6 @@
 </head>
 <body>
 
-    <!-- Khởi tạo các file âm thanh -->
-    <audio id="sfx-flip" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
-    <audio id="sfx-correct" src="https://www.soundjay.com/buttons/sounds/button-09.mp3" preload="auto"></audio>
-    <audio id="sfx-wrong" src="https://www.soundjay.com/buttons/sounds/beep-10.mp3" preload="auto"></audio>
-    <audio id="sfx-loselife" src="https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3" preload="auto"></audio>
-    <audio id="sfx-firework" src="https://www.soundjay.com/nature/sounds/fireworks-01.mp3" preload="auto"></audio>
-
     <div id="start-screen" class="overlay">
         <div class="modal">
             <h1>IELTS Reading Simulator</h1>
@@ -199,12 +192,44 @@
         let currentPassage = 0; let userAnswers = {};
         let timerInterval; let timeLeft = 3600; let isSubmitted = false;
 
-        // Hàm hỗ trợ phát âm thanh mượt mà không bị delay
-        function playAudio(id) {
-            const audio = document.getElementById(id);
-            if (audio) {
-                audio.currentTime = 0; // Tua lại từ đầu để có thể bấm liên tục
-                audio.play().catch(e => console.log("Audio play error:", e));
+        // --- BỘ TỔNG HỢP ÂM THANH (WEB AUDIO API) CHỐNG LỖI 100% ---
+        let audioCtx;
+        function playSoundEffect(type) {
+            // Khởi tạo AudioContext khi người dùng tương tác lần đầu
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            function playOsc(freq, wave, duration, vol=0.1, slideFreq=null) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = wave;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                if(slideFreq) osc.frequency.exponentialRampToValueAtTime(slideFreq, audioCtx.currentTime + duration);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            }
+
+            if (type === 'flip') {
+                playOsc(600, 'sine', 0.1, 0.05, 300); // Tiếng "Swish" nhẹ
+            } else if (type === 'correct') {
+                playOsc(659.25, 'sine', 0.1, 0.1); // Ting
+                setTimeout(() => playOsc(1046.50, 'sine', 0.3, 0.1), 100); // Ting cao hơn
+            } else if (type === 'wrong') {
+                playOsc(150, 'sawtooth', 0.3, 0.1, 100); // Tiếng "Buzz" trầm
+            } else if (type === 'loselife') {
+                playOsc(300, 'square', 0.2, 0.05); // Tèo 
+                setTimeout(() => playOsc(250, 'square', 0.2, 0.05), 200); // Teo
+                setTimeout(() => playOsc(200, 'square', 0.4, 0.05), 400); // Téo
+            } else if (type === 'firework') {
+                let notes = [523.25, 659.25, 783.99, 1046.50]; // Âm giai điệu vui vẻ rải nhanh
+                notes.forEach((f, i) => setTimeout(() => playOsc(f, 'sine', 0.2, 0.1), i * 80));
+                setTimeout(() => {
+                    notes.reverse().forEach((f, i) => setTimeout(() => playOsc(f, 'sine', 0.2, 0.1), i * 80));
+                }, 320);
             }
         }
 
@@ -380,7 +405,7 @@
         }
         
         function flipCard() { 
-            playAudio('sfx-flip'); 
+            playSoundEffect('flip');
             document.getElementById('fcard').classList.toggle('flipped'); 
         }
         
@@ -431,7 +456,7 @@
                     lastMilestone = currentMilestone;
                     shootFireworks(); 
                 } else {
-                    playAudio('sfx-correct'); // Chỉ phát âm báo đúng bình thường nếu chưa qua mốc 100
+                    playSoundEffect('correct');
                 }
             } else {
                 btnEl.classList.add('wrong');
@@ -441,9 +466,9 @@
                 if(vStreak === 3) {
                     vLives--; vStreak = 0;
                     fb.innerText += " (Mất 1 mạng do sai 3 câu liên tiếp!)";
-                    playAudio('sfx-loselife');
+                    playSoundEffect('loselife');
                 } else {
-                    playAudio('sfx-wrong');
+                    playSoundEffect('wrong');
                 }
             }
             
@@ -468,11 +493,11 @@
         }
 
         function shootFireworks() {
-            playAudio('sfx-firework');
+            playSoundEffect('firework');
             var duration = 3000;
             var end = Date.now() + duration;
             (function frame() {
-                // Thêm zIndex: 9999 để pháo hoa nổ đè lên bảng câu hỏi
+                // Thêm zIndex: 9999 để pháo hoa hiển thị trên cùng (đè lên game popup)
                 confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#00ff00', '#0000ff'], zIndex: 9999 });
                 confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#00ff00', '#0000ff'], zIndex: 9999 });
                 if (Date.now() < end) requestAnimationFrame(frame);
