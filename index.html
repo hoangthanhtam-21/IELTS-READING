@@ -87,6 +87,13 @@
 </head>
 <body>
 
+    <!-- Khởi tạo các file âm thanh -->
+    <audio id="sfx-flip" src="https://www.soundjay.com/misc/sounds/page-flip-01a.mp3" preload="auto"></audio>
+    <audio id="sfx-correct" src="https://www.soundjay.com/buttons/sounds/button-09.mp3" preload="auto"></audio>
+    <audio id="sfx-wrong" src="https://www.soundjay.com/buttons/sounds/beep-10.mp3" preload="auto"></audio>
+    <audio id="sfx-loselife" src="https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3" preload="auto"></audio>
+    <audio id="sfx-firework" src="https://www.soundjay.com/nature/sounds/fireworks-01.mp3" preload="auto"></audio>
+
     <div id="start-screen" class="overlay">
         <div class="modal">
             <h1>IELTS Reading Simulator</h1>
@@ -191,6 +198,15 @@
         let examData = null; let answersData = null; let vocabData = null;
         let currentPassage = 0; let userAnswers = {};
         let timerInterval; let timeLeft = 3600; let isSubmitted = false;
+
+        // Hàm hỗ trợ phát âm thanh mượt mà không bị delay
+        function playAudio(id) {
+            const audio = document.getElementById(id);
+            if (audio) {
+                audio.currentTime = 0; // Tua lại từ đầu để có thể bấm liên tục
+                audio.play().catch(e => console.log("Audio play error:", e));
+            }
+        }
 
         async function loadData() {
             try {
@@ -337,7 +353,7 @@
             document.getElementById('result-screen').classList.add('hidden');
             document.getElementById('vocab-screen').classList.remove('hidden');
             loadFlashcard();
-            resetQuiz(); // Prepare quiz data
+            resetQuiz(); 
         }
 
         function closeVocab() { document.getElementById('vocab-screen').classList.add('hidden'); document.getElementById('result-screen').classList.remove('hidden'); }
@@ -362,13 +378,17 @@
             document.getElementById('fc-viet').innerText = data.vietnamese;
             document.getElementById('fc-count').innerText = `${fIndex + 1} / ${vocabData.length}`;
         }
-        function flipCard() { document.getElementById('fcard').classList.toggle('flipped'); }
+        
+        function flipCard() { 
+            playAudio('sfx-flip'); 
+            document.getElementById('fcard').classList.toggle('flipped'); 
+        }
+        
         function prevCard() { if(fIndex > 0) { fIndex--; loadFlashcard(); } }
         function nextCard() { if(fIndex < vocabData.length - 1) { fIndex++; loadFlashcard(); } }
 
         // Quiz Logic
         function resetQuiz() {
-            // Shuffle vocab for quiz
             qList = [...vocabData].sort(() => Math.random() - 0.5);
             qIndex = 0; vScore = 0; vLives = 3; vStreak = 0; lastMilestone = 0;
             document.getElementById('quiz-playing').classList.remove('hidden');
@@ -379,7 +399,6 @@
 
         function loadQuizQuestion() {
             if(qIndex >= qList.length) {
-                // Thắng game, reset data để chơi vòng mới
                 qList = [...vocabData].sort(() => Math.random() - 0.5);
                 qIndex = 0;
             }
@@ -397,22 +416,22 @@
 
         function checkQuizAnswer(selectedIdx, correctIdx, btnEl) {
             if(!isQuestionActive) return;
-            isQuestionActive = false; // block multi-clicks
+            isQuestionActive = false; 
             
             let btns = document.getElementById('q-options').children;
             btns[correctIdx].classList.add('correct');
-            
             let fb = document.getElementById('q-feedback');
             
             if(selectedIdx === correctIdx) {
                 vScore += 10; vStreak = 0;
                 fb.innerText = "Chính xác! +10đ"; fb.style.color = "#27ae60";
                 
-                // Check milestone for fireworks (every 100 points)
                 let currentMilestone = Math.floor(vScore / 100);
                 if(currentMilestone > lastMilestone && vScore > 0) {
                     lastMilestone = currentMilestone;
-                    shootFireworks();
+                    shootFireworks(); 
+                } else {
+                    playAudio('sfx-correct'); // Chỉ phát âm báo đúng bình thường nếu chưa qua mốc 100
                 }
             } else {
                 btnEl.classList.add('wrong');
@@ -422,6 +441,9 @@
                 if(vStreak === 3) {
                     vLives--; vStreak = 0;
                     fb.innerText += " (Mất 1 mạng do sai 3 câu liên tiếp!)";
+                    playAudio('sfx-loselife');
+                } else {
+                    playAudio('sfx-wrong');
                 }
             }
             
@@ -446,11 +468,13 @@
         }
 
         function shootFireworks() {
+            playAudio('sfx-firework');
             var duration = 3000;
             var end = Date.now() + duration;
             (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#00ff00', '#0000ff'] });
-                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#00ff00', '#0000ff'] });
+                // Thêm zIndex: 9999 để pháo hoa nổ đè lên bảng câu hỏi
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#00ff00', '#0000ff'], zIndex: 9999 });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#00ff00', '#0000ff'], zIndex: 9999 });
                 if (Date.now() < end) requestAnimationFrame(frame);
             }());
         }
