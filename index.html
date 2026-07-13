@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IELTS Reading Simulator</title>
+    <title>IELTS Reading & Vocab Simulator</title>
+    <!-- Thư viện pháo hoa -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; background-color: #f4f7f6; }
@@ -15,6 +17,8 @@
         .btn-primary:hover { background: #2980b9; }
         .btn-success { background: #2ecc71; color: white; }
         .btn-success:hover { background: #27ae60; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #d68910; }
         
         #progress-container { background: white; padding: 10px 30px; border-bottom: 1px solid #ddd; }
         #progress-bar { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
@@ -30,20 +34,12 @@
         
         .passage-title { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; }
         .paragraph { margin-bottom: 15px; }
-        
-        /* Hiệu ứng highlight cho câu chứa đáp án */
-        .highlight { background-color: #ffeb3b; color: #000; border-radius: 4px; padding: 2px 4px; box-shadow: 0 0 6px rgba(255, 235, 59, 0.8); font-weight: 600; transition: background-color 0.5s ease-in-out; display: inline; }
+        .highlight { background-color: #ffeb3b; color: #000; border-radius: 4px; padding: 2px 4px; box-shadow: 0 0 6px rgba(255, 235, 59, 0.8); font-weight: 600; display: inline; }
         
         .question-group { margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .q-title { font-weight: bold; margin-bottom: 15px; color: #34495e; }
-        .q-item { margin-bottom: 15px; }
-        .input-fill { min-width: 60px; max-width: 100%; border: none; border-bottom: 2px solid #3498db; outline: none; text-align: center; font-size: 16px; background: transparent; padding: 2px 5px; color: #2c3e50; font-weight: bold; transition: width 0.2s; }
-        .input-fill:focus { border-bottom-color: #e74c3c; }
-        
+        .input-fill { min-width: 60px; max-width: 100%; border: none; border-bottom: 2px solid #3498db; outline: none; text-align: center; font-size: 16px; background: transparent; padding: 2px 5px; color: #2c3e50; font-weight: bold; }
         .choice-label { display: block; margin-bottom: 8px; cursor: pointer; }
-        .choice-label input { margin-right: 10px; }
         
-        /* Table Styles for Q19-21 */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
         th, td { border: 1px solid #bdc3c7; padding: 12px; text-align: left; }
         th { background-color: #ecf0f1; font-weight: bold; }
@@ -51,15 +47,42 @@
         .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
         
         .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:1000; }
-        .modal { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; max-width: 500px; width: 90%; }
-        .modal h1 { color: #2c3e50; margin-bottom: 10px; }
+        .modal { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; max-width: 500px; width: 90%; position: relative;}
+        .modal-large { max-width: 800px; }
         
-        .explanation-box { display: none; background: #e8f4f8; border-left: 4px solid #3498db; padding: 15px; margin-top: 10px; border-radius: 0 5px 5px 0; font-size: 14px; }
+        .explanation-box { display: none; background: #e8f4f8; border-left: 4px solid #3498db; padding: 15px; margin-top: 10px; font-size: 14px; }
         .correct-ans-label { font-weight: bold; color: #27ae60; display: block; margin-bottom: 5px; }
-        .loc-link { display: inline-block; margin-top: 10px; color: #e74c3c; text-decoration: none; font-weight: bold; font-size: 13px; cursor: pointer; }
-        .loc-link:hover { text-decoration: underline; }
+        .loc-link { display: inline-block; margin-top: 10px; color: #e74c3c; text-decoration: none; font-weight: bold; cursor: pointer; }
         
         .hidden { display: none !important; }
+
+        /* VOCABULARY SECTION CSS */
+        .vocab-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .vocab-nav button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #ddd; border: none; border-radius: 5px; font-weight: bold;}
+        .vocab-nav button.active { background: #3498db; color: white; }
+        
+        /* Flashcard 3D effect */
+        .flip-card { background-color: transparent; width: 400px; height: 250px; perspective: 1000px; margin: 0 auto 20px; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); padding: 20px;}
+        .flip-card-front { background-color: #2c3e50; color: white; }
+        .flip-card-back { background-color: #27ae60; color: white; transform: rotateY(180deg); }
+        .card-word { font-size: 28px; font-weight: bold; margin-bottom: 15px; color: #f1c40f;}
+        .card-ex { font-size: 16px; font-style: italic; }
+        
+        /* Quiz UI */
+        .quiz-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 18px; font-weight: bold; }
+        .quiz-score { color: #2980b9; }
+        .quiz-lives { color: #e74c3c; font-size: 20px;}
+        .quiz-word { font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 20px; }
+        .quiz-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .quiz-opt-btn { padding: 15px; font-size: 16px; cursor: pointer; background: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 8px; transition: 0.2s; }
+        .quiz-opt-btn:hover { background: #d5dbdb; }
+        .quiz-opt-btn.correct { background: #2ecc71; color: white; border-color: #27ae60; }
+        .quiz-opt-btn.wrong { background: #e74c3c; color: white; border-color: #c0392b; }
+        
+        #game-over { color: #e74c3c; font-size: 32px; font-weight: bold; margin-bottom: 20px;}
     </style>
 </head>
 <body>
@@ -70,8 +93,7 @@
             <p><strong>Duration:</strong> 60 Minutes</p>
             <p><strong>Questions:</strong> 40</p>
             <p><strong>Passages:</strong> 3</p>
-            <p style="color:#7f8c8d; font-size:14px; margin-bottom:20px;">The timer will start immediately after you click Start.</p>
-            <button class="btn btn-primary" style="font-size: 18px; padding: 15px 40px;" onclick="startTest()">Start Test</button>
+            <button class="btn btn-primary" style="font-size: 18px; padding: 15px 40px; margin-top:20px;" onclick="startTest()">Start Test</button>
         </div>
     </div>
 
@@ -80,7 +102,63 @@
             <h1>Test Completed!</h1>
             <h2 style="font-size: 48px; color: #27ae60; margin: 10px 0;"><span id="score-correct">0</span>/40</h2>
             <p style="font-size: 20px;">Estimated IELTS Band: <strong><span id="score-band">0.0</span></strong></p>
-            <button class="btn btn-primary" style="margin-top:20px;" onclick="showReview()">Review Answers</button>
+            <div style="display:flex; justify-content:center; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="showReview()">Review Answers</button>
+                <button class="btn btn-warning" onclick="startVocabSession()">Learn Vocabulary (B2-C2)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vocabulary Overlay -->
+    <div id="vocab-screen" class="overlay hidden">
+        <div class="modal modal-large" id="vocab-modal">
+            <button class="btn btn-primary" style="position:absolute; top:20px; right:20px;" onclick="closeVocab()">X Close</button>
+            <div class="vocab-nav">
+                <button id="tab-flashcard" class="active" onclick="switchVocabTab('flashcard')">Flashcards</button>
+                <button id="tab-quiz" onclick="switchVocabTab('quiz')">Game Trắc Nghiệm</button>
+            </div>
+            
+            <!-- Flashcard View -->
+            <div id="view-flashcard">
+                <div class="flip-card" id="fcard" onclick="flipCard()">
+                    <div class="flip-card-inner">
+                        <div class="flip-card-front">
+                            <div class="card-word" id="fc-word">Word</div>
+                            <div class="card-ex" id="fc-ex">Example</div>
+                            <div style="margin-top:20px; font-size:12px; opacity:0.7;">Click to flip</div>
+                        </div>
+                        <div class="flip-card-back">
+                            <div class="card-word" id="fc-viet">Vietnamese</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="prevCard()">&#8592; Prev</button>
+                    <span style="margin: 0 15px; font-weight:bold;" id="fc-count">1 / 30</span>
+                    <button class="btn btn-primary" onclick="nextCard()">Next &#8594;</button>
+                </div>
+            </div>
+
+            <!-- Quiz View -->
+            <div id="view-quiz" class="hidden">
+                <div id="quiz-playing">
+                    <div class="quiz-header">
+                        <div class="quiz-score">Score: <span id="q-score">0</span></div>
+                        <div class="quiz-lives" id="q-lives">❤️❤️❤️</div>
+                    </div>
+                    <div style="color:#7f8c8d; font-size:14px; margin-bottom:5px;">Choose the correct meaning:</div>
+                    <div class="quiz-word" id="q-word">Word</div>
+                    <div class="quiz-options" id="q-options">
+                        <!-- Options rendered by JS -->
+                    </div>
+                    <div id="q-feedback" style="font-weight:bold; height:20px;"></div>
+                </div>
+                <div id="quiz-gameover" class="hidden">
+                    <div id="game-over">GAME OVER</div>
+                    <p>Bạn đã mất hết mạng. Điểm cuối cùng: <strong id="q-final-score">0</strong></p>
+                    <button class="btn btn-warning" style="margin-top:20px;" onclick="resetQuiz()">Chơi lại</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -100,7 +178,6 @@
             <h2 class="passage-title" id="p-title">Loading...</h2>
             <div id="p-content"></div>
         </div>
-
         <div id="right-panel">
             <div id="q-content"></div>
             <div class="nav-buttons">
@@ -111,68 +188,41 @@
     </main>
 
     <script>
-        let examData = null;
-        let answersData = null;
-        let currentPassage = 0;
-        let userAnswers = {};
-        let timerInterval;
-        let timeLeft = 3600; 
-        let isSubmitted = false;
+        let examData = null; let answersData = null; let vocabData = null;
+        let currentPassage = 0; let userAnswers = {};
+        let timerInterval; let timeLeft = 3600; let isSubmitted = false;
 
         async function loadData() {
             try {
-                const resExam = await fetch('exam.json');
-                examData = await resExam.json();
-                const resAns = await fetch('answers.json');
-                answersData = await resAns.json();
+                const [resE, resA, resV] = await Promise.all([fetch('exam.json'), fetch('answers.json'), fetch('vocab.json')]);
+                examData = await resE.json(); answersData = await resA.json(); vocabData = await resV.json();
                 initProgressBar();
-            } catch (err) {
-                console.error("Error loading data", err);
-                alert("Failed to load test data. Check console for details.");
-            }
+            } catch (err) { alert("Data loading error."); }
         }
 
         function startTest() {
-            if(!examData) { alert("Data not loaded yet!"); return; }
+            if(!examData) return;
             document.getElementById('start-screen').classList.add('hidden');
             renderPassage(currentPassage);
-            startTimer();
-        }
-
-        function startTimer() {
-            const timerEl = document.getElementById('timer');
             timerInterval = setInterval(() => {
-                if(timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    submitTest();
-                    return;
-                }
+                if(timeLeft <= 0) { clearInterval(timerInterval); submitTest(); return; }
                 timeLeft--;
                 let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
                 let s = (timeLeft % 60).toString().padStart(2, '0');
-                timerEl.innerText = `${m}:${s}`;
-                if(timeLeft <= 300) timerEl.style.backgroundColor = '#c0392b';
+                document.getElementById('timer').innerText = `${m}:${s}`;
             }, 1000);
         }
 
+        // --- Core Test Logic (Render, Submit) ---
         function initProgressBar() {
             const pb = document.getElementById('progress-bar');
             pb.innerHTML = '';
             for(let i=1; i<=40; i++) {
-                let box = document.createElement('div');
-                box.className = 'prog-box';
-                box.id = 'prog-' + i;
-                box.innerText = i;
+                let box = document.createElement('div'); box.className = 'prog-box'; box.id = 'prog-'+i; box.innerText = i;
                 box.onclick = () => {
                     let targetPassage = examData.passages.findIndex(p => p.questions.some(g => g.items.some(q => q.id === i)));
-                    if(targetPassage !== -1 && targetPassage !== currentPassage) {
-                        currentPassage = targetPassage;
-                        renderPassage(currentPassage);
-                    }
-                    setTimeout(() => {
-                        let qEl = document.getElementById('q-item-' + i) || document.getElementById('exp-' + i);
-                        if(qEl) qEl.scrollIntoView({behavior: 'smooth', block: 'center'});
-                    }, 100);
+                    if(targetPassage !== -1 && targetPassage !== currentPassage) { currentPassage = targetPassage; renderPassage(currentPassage); }
+                    setTimeout(() => { let el = document.getElementById('q-item-'+i) || document.getElementById('exp-'+i); if(el) el.scrollIntoView({behavior: 'smooth', block: 'center'}); }, 100);
                 };
                 pb.appendChild(box);
             }
@@ -181,158 +231,91 @@
         function renderPassage(index) {
             const passage = examData.passages[index];
             document.getElementById('p-title').innerText = passage.title;
-            
             let contentHtml = '';
-            passage.text.forEach(para => {
-                contentHtml += `<div class="paragraph" id="${para.id}">${para.content}</div>`;
-            });
+            passage.text.forEach(para => contentHtml += `<div class="paragraph" id="${para.id}">${para.content}</div>`);
             document.getElementById('p-content').innerHTML = contentHtml;
 
             let qHtml = '';
             passage.questions.forEach(group => {
-                qHtml += `<div class="question-group">`;
-                qHtml += `<div class="q-title">${group.instruction}</div>`;
-                
+                qHtml += `<div class="question-group"><div class="q-title">${group.instruction}</div>`;
                 if(group.html_content) {
-                    let processedHtml = group.html_content;
-                    let explanationsHtml = '';
+                    let processedHtml = group.html_content; let exps = '';
                     group.items.forEach(q => {
                         let val = userAnswers[q.id] || '';
-                        let inputHtml = `<input type="text" class="input-fill" data-qid="${q.id}" value="${val}" oninput="handleInput(this)" ${isSubmitted?'disabled':''}>`;
-                        processedHtml = processedHtml.replace(`[INPUT:${q.id}]`, `<strong style="color:#e74c3c; margin-right:5px;">${q.id}</strong>` + inputHtml);
-                        explanationsHtml += `<div id="exp-${q.id}" class="explanation-box"></div>`;
+                        let inp = `<input type="text" class="input-fill" data-qid="${q.id}" value="${val}" oninput="handleInput(this)" ${isSubmitted?'disabled':''}>`;
+                        processedHtml = processedHtml.replace(`[INPUT:${q.id}]`, `<strong style="color:#e74c3c;">${q.id}</strong>` + inp);
+                        exps += `<div id="exp-${q.id}" class="explanation-box"></div>`;
                     });
-                    qHtml += `<div>${processedHtml}</div>`;
-                    qHtml += explanationsHtml;
+                    qHtml += `<div>${processedHtml}</div>${exps}`;
                 } else {
                     group.items.forEach(q => {
                         qHtml += `<div class="q-item" id="q-item-${q.id}">`;
-                        
                         if(q.type === 'fill') {
                             let val = userAnswers[q.id] || '';
-                            let inputHtml = `<input type="text" class="input-fill" data-qid="${q.id}" value="${val}" oninput="handleInput(this)" ${isSubmitted?'disabled':''}>`;
-                            qHtml += `<span>${q.id}. ${q.text.replace('___', inputHtml)}</span>`;
-                        } 
-                        else if(q.type === 'choice') {
+                            let inp = `<input type="text" class="input-fill" data-qid="${q.id}" value="${val}" oninput="handleInput(this)" ${isSubmitted?'disabled':''}>`;
+                            qHtml += `<span>${q.id}. ${q.text.replace('___', inp)}</span>`;
+                        } else if(q.type === 'choice') {
                             qHtml += `<div><strong>${q.id}.</strong> ${q.text}</div>`;
                             q.options.forEach(opt => {
                                 let checked = userAnswers[q.id] === opt.value ? 'checked' : '';
-                                qHtml += `<label class="choice-label">
-                                    <input type="radio" name="q${q.id}" data-qid="${q.id}" value="${opt.value}" onchange="handleInput(this)" ${checked} ${isSubmitted?'disabled':''}>
-                                    ${opt.text}
-                                </label>`;
+                                qHtml += `<label class="choice-label"><input type="radio" name="q${q.id}" data-qid="${q.id}" value="${opt.value}" onchange="handleInput(this)" ${checked} ${isSubmitted?'disabled':''}>${opt.text}</label>`;
                             });
                         }
-                        qHtml += `<div id="exp-${q.id}" class="explanation-box"></div>`;
-                        qHtml += `</div>`;
+                        qHtml += `<div id="exp-${q.id}" class="explanation-box"></div></div>`;
                     });
                 }
                 qHtml += `</div>`;
             });
             document.getElementById('q-content').innerHTML = qHtml;
-
             document.getElementById('btn-prev').style.visibility = index === 0 ? 'hidden' : 'visible';
             document.getElementById('btn-next').style.visibility = index === examData.passages.length - 1 ? 'hidden' : 'visible';
-
             document.querySelectorAll('.input-fill').forEach(el => autoResize(el));
-            
             if(isSubmitted) showExplanationsForCurrentPassage();
         }
 
         function handleInput(el) {
-            const qid = el.getAttribute('data-qid');
-            const val = el.value.trim();
-            userAnswers[qid] = val;
-            
+            const qid = el.getAttribute('data-qid'); const val = el.value.trim(); userAnswers[qid] = val;
             if(el.classList.contains('input-fill')) autoResize(el);
-            
             const box = document.getElementById('prog-' + qid);
-            if(val !== '') box.classList.add('answered');
-            else box.classList.remove('answered');
-            
+            if(val !== '') box.classList.add('answered'); else box.classList.remove('answered');
             document.getElementById('answered-count').innerText = Object.values(userAnswers).filter(v => v !== '').length;
         }
 
         function autoResize(el) { el.style.width = ((el.value.length + 2) * 10) + 'px'; }
-
-        function changePassage(dir) {
-            currentPassage += dir;
-            renderPassage(currentPassage);
-            document.getElementById('left-panel').scrollTop = 0;
-            document.getElementById('right-panel').scrollTop = 0;
-        }
+        function changePassage(dir) { currentPassage += dir; renderPassage(currentPassage); document.getElementById('left-panel').scrollTop = 0; }
 
         function submitTest() {
-            if(!isSubmitted && !confirm("Are you sure you want to submit your test?")) return;
-            
-            clearInterval(timerInterval);
-            isSubmitted = true;
-            let correctCount = 0;
-            
+            if(!isSubmitted && !confirm("Nộp bài?")) return;
+            clearInterval(timerInterval); isSubmitted = true; let correctCount = 0;
             for(let i=1; i<=40; i++) {
                 let uAns = (userAnswers[i] || '').toString().toLowerCase().trim();
                 let cAns = answersData[i].answer.toString().toLowerCase().trim();
-                
                 let isCorrect = false;
-                if (cAns.includes('/')) {
-                    let options = cAns.split('/').map(s => s.trim());
-                    isCorrect = options.includes(uAns);
-                } else if(uAns === cAns) {
-                    isCorrect = true;
-                }
-                let cleanCorrect = cAns.replace(/[()]/g, '').trim();
-                if(uAns !== '' && (uAns === cAns || uAns === cleanCorrect || cAns.includes(uAns) && uAns.length > 3)) {
-                    if(uAns === cAns || uAns === cleanCorrect) isCorrect = true;
-                }
-
-                const box = document.getElementById('prog-' + i);
-                box.classList.remove('answered');
-                if(isCorrect) {
-                    box.classList.add('correct');
-                    correctCount++;
-                } else {
-                    box.classList.add('incorrect');
-                }
+                if (cAns.includes('/')) { isCorrect = cAns.split('/').map(s=>s.trim()).includes(uAns); } 
+                else if(uAns === cAns) { isCorrect = true; }
+                let clean = cAns.replace(/[()]/g, '').trim();
+                if(uAns !== '' && (uAns === cAns || uAns === clean || cAns.includes(uAns) && uAns.length > 3)) { if(uAns===cAns || uAns===clean) isCorrect = true; }
+                
+                const box = document.getElementById('prog-' + i); box.classList.remove('answered');
+                if(isCorrect) { box.classList.add('correct'); correctCount++; } else { box.classList.add('incorrect'); }
             }
-            
             let band = "0.0";
-            if(correctCount >= 39) band = "9.0";
-            else if(correctCount >= 37) band = "8.5";
-            else if(correctCount >= 35) band = "8.0";
-            else if(correctCount >= 33) band = "7.5";
-            else if(correctCount >= 30) band = "7.0";
-            else if(correctCount >= 27) band = "6.5";
-            else if(correctCount >= 23) band = "6.0";
-            else if(correctCount >= 19) band = "5.5";
-            else if(correctCount >= 15) band = "5.0";
-            else if(correctCount >= 13) band = "4.5";
-            else if(correctCount >= 10) band = "4.0";
-            else band = "<4.0";
-
+            if(correctCount>=39) band="9.0"; else if(correctCount>=37) band="8.5"; else if(correctCount>=35) band="8.0"; else if(correctCount>=33) band="7.5"; else if(correctCount>=30) band="7.0"; else if(correctCount>=27) band="6.5"; else if(correctCount>=23) band="6.0"; else if(correctCount>=19) band="5.5"; else if(correctCount>=15) band="5.0"; else if(correctCount>=13) band="4.5"; else if(correctCount>=10) band="4.0"; else band="<4.0";
             document.getElementById('score-correct').innerText = correctCount;
             document.getElementById('score-band').innerText = band;
             document.getElementById('result-screen').classList.remove('hidden');
-            document.getElementById('submit-btn').classList.add('hidden');
         }
 
-        function showReview() {
-            document.getElementById('result-screen').classList.add('hidden');
-            renderPassage(currentPassage);
-        }
+        function showReview() { document.getElementById('result-screen').classList.add('hidden'); renderPassage(currentPassage); }
 
         function showExplanationsForCurrentPassage() {
-            const passage = examData.passages[currentPassage];
-            passage.questions.forEach(group => {
+            examData.passages[currentPassage].questions.forEach(group => {
                 group.items.forEach(q => {
-                    const ansData = answersData[q.id];
-                    const expBox = document.getElementById('exp-' + q.id);
-                    if(expBox && ansData) {
-                        expBox.style.display = 'block';
-                        expBox.innerHTML = `
-                            <span class="correct-ans-label">Correct Answer: ${ansData.answer}</span>
-                            <div><strong>Explanation:</strong> ${ansData.explanation}</div>
-                            ${ansData.location ? `<a class="loc-link" onclick="scrollToPassage('${ansData.location}')">➜ View exact sentence in passage</a>` : ''}
-                        `;
+                    const ans = answersData[q.id]; const box = document.getElementById('exp-' + q.id);
+                    if(box && ans) {
+                        box.style.display = 'block';
+                        box.innerHTML = `<span class="correct-ans-label">Correct: ${ans.answer}</span><div><strong>Exp:</strong> ${ans.explanation}</div>
+                        ${ans.location ? `<a class="loc-link" onclick="scrollToPassage('${ans.location}')">➜ Xem trong bài đọc</a>` : ''}`;
                     }
                 });
             });
@@ -341,13 +324,135 @@
         function scrollToPassage(locId) {
             document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
             const target = document.getElementById(locId);
-            if(target) {
-                target.classList.add('highlight');
-                // Scroll parent container to the specific sentence
-                target.scrollIntoView({behavior: 'smooth', block: 'center'});
-            } else {
-                alert('Location not mapped in this demo.');
+            if(target) { target.classList.add('highlight'); target.scrollIntoView({behavior: 'smooth', block: 'center'}); }
+        }
+
+        // --- VOCABULARY SECTION LOGIC ---
+        let fIndex = 0; 
+        let qList = []; let qIndex = 0; let vScore = 0; let vLives = 3; let vStreak = 0; let lastMilestone = 0;
+        let isQuestionActive = true;
+
+        function startVocabSession() {
+            if(!vocabData) { alert("Chưa có dữ liệu vocab.json"); return; }
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('vocab-screen').classList.remove('hidden');
+            loadFlashcard();
+            resetQuiz(); // Prepare quiz data
+        }
+
+        function closeVocab() { document.getElementById('vocab-screen').classList.add('hidden'); document.getElementById('result-screen').classList.remove('hidden'); }
+
+        function switchVocabTab(tab) {
+            document.getElementById('tab-flashcard').classList.remove('active');
+            document.getElementById('tab-quiz').classList.remove('active');
+            document.getElementById('view-flashcard').classList.add('hidden');
+            document.getElementById('view-quiz').classList.add('hidden');
+            
+            document.getElementById('tab-' + tab).classList.add('active');
+            document.getElementById('view-' + tab).classList.remove('hidden');
+        }
+
+        // Flashcard Logic
+        function loadFlashcard() {
+            let card = document.getElementById('fcard');
+            card.classList.remove('flipped');
+            const data = vocabData[fIndex];
+            document.getElementById('fc-word').innerText = data.word;
+            document.getElementById('fc-ex').innerText = `"${data.example}"`;
+            document.getElementById('fc-viet').innerText = data.vietnamese;
+            document.getElementById('fc-count').innerText = `${fIndex + 1} / ${vocabData.length}`;
+        }
+        function flipCard() { document.getElementById('fcard').classList.toggle('flipped'); }
+        function prevCard() { if(fIndex > 0) { fIndex--; loadFlashcard(); } }
+        function nextCard() { if(fIndex < vocabData.length - 1) { fIndex++; loadFlashcard(); } }
+
+        // Quiz Logic
+        function resetQuiz() {
+            // Shuffle vocab for quiz
+            qList = [...vocabData].sort(() => Math.random() - 0.5);
+            qIndex = 0; vScore = 0; vLives = 3; vStreak = 0; lastMilestone = 0;
+            document.getElementById('quiz-playing').classList.remove('hidden');
+            document.getElementById('quiz-gameover').classList.add('hidden');
+            updateQuizUI();
+            loadQuizQuestion();
+        }
+
+        function loadQuizQuestion() {
+            if(qIndex >= qList.length) {
+                // Thắng game, reset data để chơi vòng mới
+                qList = [...vocabData].sort(() => Math.random() - 0.5);
+                qIndex = 0;
             }
+            isQuestionActive = true;
+            document.getElementById('q-feedback').innerText = "";
+            let data = qList[qIndex];
+            document.getElementById('q-word').innerText = data.word;
+            
+            let optsHtml = "";
+            data.options.forEach((opt, idx) => {
+                optsHtml += `<button class="quiz-opt-btn" onclick="checkQuizAnswer(${idx}, ${data.answer}, this)">${opt}</button>`;
+            });
+            document.getElementById('q-options').innerHTML = optsHtml;
+        }
+
+        function checkQuizAnswer(selectedIdx, correctIdx, btnEl) {
+            if(!isQuestionActive) return;
+            isQuestionActive = false; // block multi-clicks
+            
+            let btns = document.getElementById('q-options').children;
+            btns[correctIdx].classList.add('correct');
+            
+            let fb = document.getElementById('q-feedback');
+            
+            if(selectedIdx === correctIdx) {
+                vScore += 10; vStreak = 0;
+                fb.innerText = "Chính xác! +10đ"; fb.style.color = "#27ae60";
+                
+                // Check milestone for fireworks (every 100 points)
+                let currentMilestone = Math.floor(vScore / 100);
+                if(currentMilestone > lastMilestone && vScore > 0) {
+                    lastMilestone = currentMilestone;
+                    shootFireworks();
+                }
+            } else {
+                btnEl.classList.add('wrong');
+                vScore -= 5; vStreak++;
+                fb.innerText = "Sai rồi! -5đ"; fb.style.color = "#e74c3c";
+                
+                if(vStreak === 3) {
+                    vLives--; vStreak = 0;
+                    fb.innerText += " (Mất 1 mạng do sai 3 câu liên tiếp!)";
+                }
+            }
+            
+            updateQuizUI();
+            
+            if(vLives <= 0) {
+                setTimeout(() => {
+                    document.getElementById('quiz-playing').classList.add('hidden');
+                    document.getElementById('quiz-gameover').classList.remove('hidden');
+                    document.getElementById('q-final-score').innerText = vScore;
+                }, 1500);
+            } else {
+                setTimeout(() => { qIndex++; loadQuizQuestion(); }, 1500);
+            }
+        }
+
+        function updateQuizUI() {
+            document.getElementById('q-score').innerText = vScore;
+            let heartStr = "";
+            for(let i=0; i<vLives; i++) heartStr += "❤️";
+            document.getElementById('q-lives').innerText = heartStr || "💔";
+        }
+
+        function shootFireworks() {
+            var duration = 3000;
+            var end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#ff0000', '#00ff00', '#0000ff'] });
+                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#ff0000', '#00ff00', '#0000ff'] });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
         }
 
         window.onload = loadData;
